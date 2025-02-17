@@ -1,4 +1,4 @@
 Task
 other_projects/
-__pycache__/
+**/__pycache__
 results
