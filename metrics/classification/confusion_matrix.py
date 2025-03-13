@@ -4,7 +4,8 @@ from typing import (
     Optional
 )
 from sklearn.metrics import (
-    confusion_matrix
+    confusion_matrix,
+    classification_report,
 )
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -44,4 +45,19 @@ def plot_confusion_matrix(
     
     # Show the plot
     plt.show()
+    
+
+def show_all_classification_metrics(
+    y_true: pd.Series, 
+    y_pred: pd.Series, 
+    class_names: List[str],
+    normalize_confusion_matrix:Optional[str] = DEFAULT_NORMALIZE,
+    ) -> None:
+    print(classification_report(y_true=y_true, y_pred=y_pred, target_names=class_names))
+    plot_confusion_matrix(
+        y_true=y_true,
+        y_pred=y_pred,
+        class_names=class_names,
+        normalize=normalize_confusion_matrix,
+    )
     
