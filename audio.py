@@ -4,8 +4,24 @@ from dataclasses import (
 )
 import wave
 from pathlib import Path
+import pyloudnorm as pyln
+from typing import (
+    Callable,
+)
+import torch
+
 from configs.base import (
     RB_FILE_READING_MODE,
+)
+
+from models.asr.whisper import (
+    # whisper_audio_file_2_transcription,
+    whisper_tensor_with_sr_transcription,
+)
+
+from transformers import (
+    WhisperProcessor,
+    WhisperForConditionalGeneration,
 )
 
 @dataclass 
@@ -64,9 +80,33 @@ class Audio:
             n_channels=self.n_channels,
             data=data
         )
+    
     def sample_dtype(
         self,
         )->type:
         return type(self).sample_width_2_dtype(sample_width=self.sample_width)
-
+    
+    def volume(
+        self,
+        data_type:type = np.float64,
+        )->np.float64:
+        meter:pyln.meter.Meter = pyln.Meter(self.sr)
+        return meter.integrated_loudness(self.data.astype(data_type))
+    
+    def transcribe(
+        self,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str
+        ] = whisper_tensor_with_sr_transcription
+        )->str:
+        return transcriber(
+            tensor=torch.Tensor(self.data.copy()), 
+            sr=self.sr,
+        )
 

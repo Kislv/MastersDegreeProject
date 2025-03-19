@@ -22,4 +22,3 @@ def text_2_is_contain_swear_words(
         normalized_text=normalized_text,
         lang=lang,
     )
-    
