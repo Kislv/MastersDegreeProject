@@ -7,11 +7,29 @@ from pathlib import Path
 import pyloudnorm as pyln
 from typing import (
     Callable,
+    Optional,
+    List,
+    Set,
 )
 import torch
+import librosa
+import speech_recognition as sr
+
+from transformers import (
+    WhisperProcessor,
+    WhisperForConditionalGeneration,
+)
 
 from configs.base import (
     RB_FILE_READING_MODE,
+    SECONDS_QUANTITY_IN_MINUTE,
+    BREAK_LINE,
+    RUSSIAN_VOWELS,
+    SPACE,
+)
+
+from high_level_feature_extractor.text.all import (
+    TranscriptionHighLevelFeatures,
 )
 
 from models.asr.whisper import (
@@ -19,10 +37,17 @@ from models.asr.whisper import (
     whisper_tensor_with_sr_transcription,
 )
 
-from transformers import (
-    WhisperProcessor,
-    WhisperForConditionalGeneration,
+from processing.text.normalization import (
+    TOKENIZER,
+    PUNCTUATION_SYMBOLS,
 )
+
+@dataclass
+class PronounceSpeed:
+    WPS:int
+    LPS:int
+    # In Russian the quantity of syllables in a word is equal to the quantity of vowel letters
+    SPS:int
 
 @dataclass 
 class Audio:
@@ -31,6 +56,9 @@ class Audio:
     n_frames:int
     data:np.ndarray
     n_channels:int=1
+    # Try to use "__"
+    _transcription:Optional[str] = None
+
     @classmethod
     def sample_width_2_dtype(
         cls,
@@ -69,6 +97,37 @@ class Audio:
                 data=signal_array,
             )
             return audio
+    # [''] understand what does it mean
+    def _transcribe(
+        self,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str
+        ] = whisper_tensor_with_sr_transcription,
+        )->str:
+        return transcriber(
+            tensor=torch.Tensor(self.data.copy()), 
+            sr=self.sr,
+        )
+
+    def transcription(
+        self,
+        )->List[str]:
+        if self._transcription is None:
+            self._transcription = self._transcribe()
+        return self._transcription
+
+    def joined_transcription(
+        self,
+        sep:str = BREAK_LINE
+        )->str:
+        return sep.join(self.transcription())
+
     def new_data_copy(
         self,
         data:np.ndarray
@@ -93,20 +152,48 @@ class Audio:
         meter:pyln.meter.Meter = pyln.Meter(self.sr)
         return meter.integrated_loudness(self.data.astype(data_type))
     
-    def transcribe(
+    def mean_word_letters_quantity(
         self,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str
-        ] = whisper_tensor_with_sr_transcription
-        )->str:
-        return transcriber(
-            tensor=torch.Tensor(self.data.copy()), 
-            sr=self.sr,
-        )
+        ):
+        return
+        pass
+    
+    def calculate_pronunciation_speed(
+        self,
+        vowels:Set[str] = RUSSIAN_VOWELS,
+        ):
 
+        duration:float = librosa.get_duration(y=self.data, sr=self.sr)
+        transcription:str = self.joined_transcription()
+        word_count:int = len(transcription.split())
+        
+        return PronounceSpeed(
+            WPS=word_count / duration,
+            LPS=sum(
+                map(
+                    lambda l: l.isalpha(), 
+                    transcription,
+                )
+            ) / duration,
+            SPS = sum(
+                map(
+                    lambda letter: letter in vowels,
+                    transcription,
+                )
+            ) / duration,
+        )
+    
+    def text_high_level_features(
+        self,
+        tokenizer:Callable = TOKENIZER,
+        punctuation_symbols:Set[str] = PUNCTUATION_SYMBOLS,
+        words_sep:str = SPACE,
+        )->TranscriptionHighLevelFeatures:
+        return TranscriptionHighLevelFeatures.text_init(
+            text=self.joined_transcription(),
+            tokenizer=tokenizer,
+            punctuation_symbols=punctuation_symbols,
+            words_sep=words_sep,
+        )
+    
+    # def 

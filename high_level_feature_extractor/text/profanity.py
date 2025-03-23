@@ -1,3 +1,4 @@
+import bdw
 from bdw.check import Check # https://github.com/FlacSy/BadWords/tree/master
 from processing.text.normalization import (
     text_2_normalized_text,
@@ -12,7 +13,6 @@ def normalized_text_2_is_contain_swear_words(
     filter:bdw.check.Check = Check(languages=[lang])
     return filter.filter_profanity(normalized_text, language=lang)
     
-
 def text_2_is_contain_swear_words(
     text:str,
     lang:str = PROFANITY_WORD_FILTER_LANG_NAME,

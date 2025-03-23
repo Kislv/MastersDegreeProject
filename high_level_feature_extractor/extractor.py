@@ -25,10 +25,16 @@ from volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
 )
 
+# from high_level_feature_extractor.text.all import (
+#     TranscriptionHighLevelFeatures,
+# )
+
+
 @dataclass
 class HighLevelSpeechFeatures:
     loudness: np.float64
     HF_power_ratio:np.float64
+    # transcription_features:TranscriptionHighLevelFeatures
 
     @classmethod
     def wav_path_2_HF_power_ratio(
@@ -102,4 +108,4 @@ class HighLevelSpeechFeatures:
             HF_power_ratio=cls.wav_path_2_HF_power_ratio(file_path=path)
         )
 
-    
+
