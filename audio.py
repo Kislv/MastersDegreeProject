@@ -42,13 +42,6 @@ from processing.text.normalization import (
     PUNCTUATION_SYMBOLS,
 )
 
-@dataclass
-class PronounceSpeed:
-    WPS:int
-    LPS:int
-    # In Russian the quantity of syllables in a word is equal to the quantity of vowel letters
-    SPS:int
-
 @dataclass 
 class Audio:
     sample_width:int
@@ -56,7 +49,7 @@ class Audio:
     n_frames:int
     data:np.ndarray
     n_channels:int=1
-    # Try to use "__"
+    # TODO: Try to use "__"
     _transcription:Optional[str] = None
 
     @classmethod
@@ -117,16 +110,38 @@ class Audio:
 
     def transcription(
         self,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str
+        ] = whisper_tensor_with_sr_transcription,
         )->List[str]:
         if self._transcription is None:
-            self._transcription = self._transcribe()
+            self._transcription = self._transcribe(
+                transcriber=transcriber
+            )
         return self._transcription
 
     def joined_transcription(
         self,
-        sep:str = BREAK_LINE
+        sep:str = BREAK_LINE,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str
+        ] = whisper_tensor_with_sr_transcription,
         )->str:
-        return sep.join(self.transcription())
+        return sep.join(
+            self.transcription(transcriber=transcriber)
+        )
 
     def new_data_copy(
         self,
@@ -145,55 +160,35 @@ class Audio:
         )->type:
         return type(self).sample_width_2_dtype(sample_width=self.sample_width)
     
-    def volume(
-        self,
-        data_type:type = np.float64,
-        )->np.float64:
-        meter:pyln.meter.Meter = pyln.Meter(self.sr)
-        return meter.integrated_loudness(self.data.astype(data_type))
-    
-    def mean_word_letters_quantity(
-        self,
-        ):
-        return
-        pass
-    
-    def calculate_pronunciation_speed(
-        self,
-        vowels:Set[str] = RUSSIAN_VOWELS,
-        ):
 
-        duration:float = librosa.get_duration(y=self.data, sr=self.sr)
-        transcription:str = self.joined_transcription()
-        word_count:int = len(transcription.split())
-        
-        return PronounceSpeed(
-            WPS=word_count / duration,
-            LPS=sum(
-                map(
-                    lambda l: l.isalpha(), 
-                    transcription,
-                )
-            ) / duration,
-            SPS = sum(
-                map(
-                    lambda letter: letter in vowels,
-                    transcription,
-                )
-            ) / duration,
-        )
     
-    def text_high_level_features(
-        self,
-        tokenizer:Callable = TOKENIZER,
-        punctuation_symbols:Set[str] = PUNCTUATION_SYMBOLS,
-        words_sep:str = SPACE,
-        )->TranscriptionHighLevelFeatures:
-        return TranscriptionHighLevelFeatures.text_init(
-            text=self.joined_transcription(),
-            tokenizer=tokenizer,
-            punctuation_symbols=punctuation_symbols,
-            words_sep=words_sep,
-        )
+    # def mean_word_letters_quantity(
+    #     self,
+    #     ):
+    #     return
+    #     pass
     
-    # def 
+
+    
+    # def _text_high_level_features(
+    #     self,
+    #     tokenizer:Callable = TOKENIZER,
+    #     punctuation_symbols:Set[str] = PUNCTUATION_SYMBOLS,
+    #     words_sep:str = SPACE,
+    #     transcriber:Callable[
+    #         [
+    #         torch.Tensor, 
+    #         int, 
+    #         WhisperProcessor, 
+    #         WhisperForConditionalGeneration
+    #         ], 
+    #         str
+    #     ] = whisper_tensor_with_sr_transcription,
+    #     )->TranscriptionHighLevelFeatures:
+    #     return TranscriptionHighLevelFeatures.text_init(
+    #         text=self.joined_transcription(transcriber=transcriber),
+    #         tokenizer=tokenizer,
+    #         punctuation_symbols=punctuation_symbols,
+    #         words_sep=words_sep,
+    #     )
+    

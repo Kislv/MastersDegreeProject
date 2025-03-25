@@ -3,14 +3,22 @@ from dataclasses import (
 )
 import numpy as np
 from pathlib import Path
+import pyloudnorm as pyln
 from typing import (
     Callable,
     Optional, 
+    Set,
 )
 import sys
 from scipy.io import wavfile
 from audio import Audio
 from scipy.fft import rfft, irfft
+import torch
+from transformers import (
+    WhisperProcessor,
+    WhisperForConditionalGeneration,
+)
+import librosa
 sys.path.append('..')
 
 from models.asr.whisper import (
@@ -25,26 +33,42 @@ from volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
 )
 
-# from high_level_feature_extractor.text.all import (
-#     TranscriptionHighLevelFeatures,
-# )
+from high_level_feature_extractor.text.all import (
+    TranscriptionHighLevelFeatures,
+)
+from models.asr.whisper import (
+    whisper_tensor_with_sr_transcription
+)
 
+from configs.base import (
+    RUSSIAN_VOWELS,
+)
+
+@dataclass
+class PronounceSpeed:
+    WPS:int
+    LPS:int
+    # In Russian the quantity of syllables in a word is equal to the quantity of vowel letters
+    SPS:int
 
 @dataclass
 class HighLevelSpeechFeatures:
     loudness: np.float64
     HF_power_ratio:np.float64
+    pronounce_speed:PronounceSpeed
+    transcription_features:TranscriptionHighLevelFeatures
     # transcription_features:TranscriptionHighLevelFeatures
 
     @classmethod
-    def wav_path_2_HF_power_ratio(
+    def _HF_power_ratio(
         cls,
-        file_path:Path,
+        audio:Audio,
         HF_threshold:int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
         )->np.float64:
-        sampling_rate, signal = wavfile.read(file_path)
+        # sampling_rate, signal = wavfile.read(file_path)
         # Normalize to [-1, 1]
-        signal:np.ndarray = signal / np.max(np.abs(signal))
+        
+        signal:np.ndarray = audio.data / np.max(np.abs(audio.data))
 
         # Apply Hann window
         window:np.ndarray = np.hanning(len(signal))
@@ -52,7 +76,7 @@ class HighLevelSpeechFeatures:
 
         n:int = len(signal_windowed)
         freq_magnitudes:np.ndarray = np.abs(np.fft.fft(signal_windowed))
-        freqs:np.ndarray = np.fft.fftfreq(n, d=1/sampling_rate)
+        freqs:np.ndarray = np.fft.fftfreq(n, d=1/audio.sr)
 
         # Keep only positive frequencies (half the spectrum)
         positive_freqs:np.ndarray = freqs[:n//2]
@@ -90,13 +114,68 @@ class HighLevelSpeechFeatures:
         sample_dtype:type = audio.sample_dtype()
         filtered_signal:np.ndarray = filtered_signal.astype(sample_dtype) 
         return audio.new_data_copy(data=filtered_signal)
+    
+    @classmethod
+    def _volume(
+        cls,
+        audio:Audio, 
+        data_type:type = np.float64,
+        )->np.float64:
+        meter:pyln.meter.Meter = pyln.Meter(audio.sr)
+        return meter.integrated_loudness(audio.data.astype(data_type))
 
+    @classmethod
+    def _pronunciation_speed(
+        cls,
+        audio:Audio,
+        vowels:Set[str] = RUSSIAN_VOWELS,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str
+        ] = whisper_tensor_with_sr_transcription,
+        ):
+
+        duration:float = librosa.get_duration(y=audio.data, sr=audio.sr)
+        transcription:str = audio.joined_transcription(
+            transcriber=transcriber,
+        )
+        word_count:int = len(transcription.split())
+        
+        return PronounceSpeed(
+            WPS=word_count / duration,
+            LPS=sum(
+                map(
+                    lambda l: l.isalpha(), 
+                    transcription,
+                )
+            ) / duration,
+            SPS = sum(
+                map(
+                    lambda letter: letter in vowels,
+                    transcription,
+                )
+            ) / duration,
+        )
+    
     @classmethod
     def wav_path_init(
         cls,
         path:Path,
-        transcriber:Callable[[Path], str] = whisper_audio_file_2_transcription,
-        transcription:Optional[str] = None,
+        transcriber:Callable[
+            [
+            torch.Tensor, 
+            int, 
+            WhisperProcessor, 
+            WhisperForConditionalGeneration
+            ], 
+            str,
+        ] = whisper_tensor_with_sr_transcription,
+        HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
         ):
         audio:Audio = Audio.wav_file_path_init(
             path=path,
@@ -104,8 +183,23 @@ class HighLevelSpeechFeatures:
         # text:str = transcriber(path)
 
         return HighLevelSpeechFeatures(
-            loudness=audio.volume(),
-            HF_power_ratio=cls.wav_path_2_HF_power_ratio(file_path=path)
+            loudness=cls._volume(
+                audio=audio,
+            ),
+            HF_power_ratio=cls._HF_power_ratio(
+                audio=audio,
+                HF_threshold=HF_threshold,
+            ),
+            pronounce_speed=cls._pronunciation_speed(
+                audio=audio,
+                vowels=RUSSIAN_VOWELS, 
+                transcriber=transcriber,
+            ),
+            transcription_features = TranscriptionHighLevelFeatures.text_init(
+                text=audio.joined_transcription(
+                    transcriber=transcriber,
+                ),
+            )
         )
 
 
