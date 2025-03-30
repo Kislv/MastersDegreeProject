@@ -13,7 +13,6 @@ from typing import (
 )
 import torch
 import librosa
-import speech_recognition as sr
 
 from transformers import (
     WhisperProcessor,
@@ -26,6 +25,7 @@ from configs.base import (
     BREAK_LINE,
     RUSSIAN_VOWELS,
     SPACE,
+    EMPTY,
 )
 
 from high_level_feature_extractor.text.all import (
@@ -43,7 +43,14 @@ from processing.text.normalization import (
 )
 
 @dataclass 
+class WAVFilePathInitArgs:
+    path:Path
+    transcription:Optional[str] = None
+    reading_mode:str = RB_FILE_READING_MODE
+
+@dataclass 
 class Audio:
+    hash: str
     sample_width:int
     sr:int
     n_frames:int
@@ -65,13 +72,18 @@ class Audio:
             return np.int32
         else:
             raise ValueError("Unsupported sample width")
+
     @classmethod
     def wav_file_path_init(
         cls,
-        path:Path,
-        reading_mode:str = RB_FILE_READING_MODE,
+        # path:Path,
+        # transcription:Optional[str] = None,
+        # reading_mode:str = RB_FILE_READING_MODE,
+        arguments:WAVFilePathInitArgs
         ):
-        with wave.open(str(path), reading_mode) as wav_file:
+        if not arguments.path.exists():
+            raise FileNotFoundError
+        with wave.open(str(arguments.path), arguments.reading_mode) as wav_file:
             n_channels:int = wav_file.getnchannels()
             frame_rate:int = wav_file.getframerate()
             sample_width:int = wav_file.getsampwidth()
@@ -83,11 +95,13 @@ class Audio:
                 dtype=dtype,
             )
             audio:Audio = Audio(
+                hash=arguments.path.stem,
                 n_channels=n_channels,
                 sample_width=sample_width,
                 sr=frame_rate,
                 n_frames=n_frames,
                 data=signal_array,
+                _transcription=arguments.transcription,
             )
             return audio
     # [''] understand what does it mean
@@ -124,7 +138,9 @@ class Audio:
             self._transcription = self._transcribe(
                 transcriber=transcriber
             )
-        return self._transcription
+        if isinstance(self._transcription, float):
+            self._transcription = EMPTY
+        return self._transcription 
 
     def joined_transcription(
         self,

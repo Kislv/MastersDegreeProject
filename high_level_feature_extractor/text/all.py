@@ -25,7 +25,8 @@ from processing.text.normalization import (
 @dataclass
 class TranscriptionHighLevelFeatures:
     mean_words_length:float
-    profanity_words_quantity:int
+    # profanity_words_quantity:int
+    profanity_words_ratio:float
     @classmethod
     def text_init(
         cls,
@@ -56,11 +57,9 @@ class TranscriptionHighLevelFeatures:
             mean_words_length = sum(
                 map(lambda word: len(word), words)
             ) / len(words),
-            profanity_words_quantity = sum(
+            profanity_words_ratio = sum(
                 map(
                     lambda word: text_2_is_contain_swear_words(word), normalized_text.split(words_sep)
                 )
-            )
+            ) / len(words)
         )
-
-

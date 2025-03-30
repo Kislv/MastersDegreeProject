@@ -2,3 +2,4 @@ Task
 other_projects/
 **/__pycache__
 results
+**/nohup.out

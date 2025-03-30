@@ -2,18 +2,47 @@ import torch
 import torchaudio
 import numpy as np
 from pathlib import Path
-
+import os
+import transformers
 from transformers import (
     WhisperProcessor,
     WhisperForConditionalGeneration,
 )
+from huggingface_hub import snapshot_download
+import sys
+
+sys.path.append('../..')
+from configs.paths import (
+    WHISPER_MEDIUM_DIR_PATH,
+)
+from models.config import (
+    TORCH_TENSORS_KEYWOED,
+)
+
 
 # load model and processor
-whisper_model_name:str = 'openai/whisper-medium'
-WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(whisper_model_name)
-WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(whisper_model_name)
+WHISPER_MODEL_NAME:str = 'openai/whisper-medium'
+# WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(WHISPER_MODEL_NAME)
+# WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(WHISPER_MODEL_NAME)
+WHISPER_PROCESSOR = None
+WHISPER_MODEL = None
+# WHISPER_MODEL.config.forced_decoder_ids = None
+
+
+# Define model name and local directory
+# WHISPER_MEDIUM_DIR_PATH:Path = Path('/data01/vvkiselev/data/dpl/models/whisper_medium')
+
+# Download model files to local directory if not already downloaded
+if not os.path.exists(WHISPER_MEDIUM_DIR_PATH):
+    snapshot_download(
+        repo_id=WHISPER_MODEL_NAME, 
+        local_dir=WHISPER_MEDIUM_DIR_PATH,
+    )
+
+# Load model and processor from local directory
+WHISPER_PROCESSOR:transformers.models.whisper.processing_whisper.WhisperProcessor = WhisperProcessor.from_pretrained(WHISPER_MEDIUM_DIR_PATH)
+WHISPER_MODEL:transformers.models.whisper.modeling_whisper.WhisperForConditionalGeneration = WhisperForConditionalGeneration.from_pretrained(WHISPER_MEDIUM_DIR_PATH)
 WHISPER_MODEL.config.forced_decoder_ids = None
-TORCH_TENSORS_KEYWOED:str = 'pt'
 
 def whisper_tensor_with_sr_transcription(
     tensor:torch.Tensor,

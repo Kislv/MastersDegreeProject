@@ -42,6 +42,7 @@ from models.asr.whisper import (
 
 from configs.base import (
     RUSSIAN_VOWELS,
+    EPSILON,
 )
 
 @dataclass
@@ -161,27 +162,33 @@ class HighLevelSpeechFeatures:
                 )
             ) / duration,
         )
-    
+
     @classmethod
-    def wav_path_init(
+    def audio_init(
         cls,
-        path:Path,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str,
+        audio:Audio,
+        transcriber:Optional[
+            Callable[
+                [
+                torch.Tensor, 
+                int, 
+                WhisperProcessor, 
+                WhisperForConditionalGeneration
+                ], 
+                str,
+            ]
         ] = whisper_tensor_with_sr_transcription,
         HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
-        ):
-        audio:Audio = Audio.wav_file_path_init(
-            path=path,
-        )
-        # text:str = transcriber(path)
-
+        vowels:Set[str] = RUSSIAN_VOWELS,
+        ): 
+        if audio._transcription is None and transcriber is None:
+            raise Exception('audio._transcription is None and transcriber is None')
+        
+        not_nan_quanity:int = np.count_nonzero(~np.isnan(np.array([audio.data])))
+        are_all_zeros:bool = not np.any(audio.data)
+        if not_nan_quanity == 0 or are_all_zeros:
+            return None
+        
         return HighLevelSpeechFeatures(
             loudness=cls._volume(
                 audio=audio,
@@ -192,7 +199,7 @@ class HighLevelSpeechFeatures:
             ),
             pronounce_speed=cls._pronunciation_speed(
                 audio=audio,
-                vowels=RUSSIAN_VOWELS, 
+                vowels=vowels, 
                 transcriber=transcriber,
             ),
             transcription_features = TranscriptionHighLevelFeatures.text_init(
@@ -202,4 +209,57 @@ class HighLevelSpeechFeatures:
             )
         )
 
+    # @classmethod
+    # def wav_path_init(
+    #     cls,
+    #     path:Path,
+    #     transcription:Optional[str],
+    #     transcriber:Callable[
+    #         [
+    #         torch.Tensor, 
+    #         int, 
+    #         WhisperProcessor, 
+    #         WhisperForConditionalGeneration
+    #         ], 
+    #         str,
+    #     ] = whisper_tensor_with_sr_transcription,
+    #     HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
+    #     vowels:Set[str] = RUSSIAN_VOWELS,
+    #     ):
+    #     audio:Audio = Audio.wav_file_path_init(
+    #         path=path,
+    #         transcription=transcription,
+    #     )
+    #     return cls.audio_init(
+    #         audio=audio,
+    #         transcriber=transcriber,
+    #         HF_threshold=HF_threshold,
+    #         vowels=vowels
+    #     )
+    #     # text:str = transcriber(path)
 
+    #     # return HighLevelSpeechFeatures(
+    #     #     loudness=cls._volume(
+    #     #         audio=audio,
+    #     #     ),
+    #     #     HF_power_ratio=cls._HF_power_ratio(
+    #     #         audio=audio,
+    #     #         HF_threshold=HF_threshold,
+    #     #     ),
+    #     #     pronounce_speed=cls._pronunciation_speed(
+    #     #         audio=audio,
+    #     #         vowels=RUSSIAN_VOWELS, 
+    #     #         transcriber=transcriber,
+    #     #     ),
+    #     #     transcription_features = TranscriptionHighLevelFeatures.text_init(
+    #     #         text=audio.joined_transcription(
+    #     #             transcriber=transcriber,
+    #     #         ),
+    #     #     )
+    #     # )
+
+
+@dataclass
+class HashHLF:
+    hash:str
+    features:Optional[HighLevelSpeechFeatures]

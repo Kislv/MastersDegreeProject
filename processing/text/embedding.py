@@ -14,12 +14,12 @@ import sys
 
 sys.path.append('../..')
 from configs.paths import (
-    DEPLOMA_DIR_PATH,
+    PROJECT_DATA_DIR_PATH,
 )
 
 TORCH_UNIFIED_SIZE:int = 49
 
-HYPOTHESES_DIR_PATH:Path = DEPLOMA_DIR_PATH / 'hypotheses'
+HYPOTHESES_DIR_PATH:Path = PROJECT_DATA_DIR_PATH / 'hypotheses'
 NAVEC_EMBEDDINGS_FILE_PATH:Path = HYPOTHESES_DIR_PATH / 'navec_hudlit_v1_12B_500K_300d_100q.tar'  # 51MB
 
 NAVEC:Navec = Navec.load(NAVEC_EMBEDDINGS_FILE_PATH)  # ~1 sec, ~100MB RAM
