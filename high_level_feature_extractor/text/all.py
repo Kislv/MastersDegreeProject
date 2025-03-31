@@ -22,11 +22,17 @@ from processing.text.normalization import (
     PUNCTUATION_SYMBOLS,
 )
 
+from high_level_feature_extractor.text.meaning import (
+    tf_idf_mean,
+)
+
+
 @dataclass
 class TranscriptionHighLevelFeatures:
     mean_words_length:float
     # profanity_words_quantity:int
     profanity_words_ratio:float
+    meaning:float
     @classmethod
     def text_init(
         cls,
@@ -50,8 +56,7 @@ class TranscriptionHighLevelFeatures:
             punctuation_symbols=punctuation_symbols,
             words_sep=words_sep,
         )
-        
-
+    
         words:List[str] = letters_and_seps_only.split(sep=words_sep)
         return TranscriptionHighLevelFeatures(
             mean_words_length = sum(
@@ -61,5 +66,8 @@ class TranscriptionHighLevelFeatures:
                 map(
                     lambda word: text_2_is_contain_swear_words(word), normalized_text.split(words_sep)
                 )
-            ) / len(words)
+            ) / len(words),
+            meaning=tf_idf_mean(
+                text=normalized_text,
+            )
         )

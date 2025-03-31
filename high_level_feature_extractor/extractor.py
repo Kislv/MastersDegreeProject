@@ -1,13 +1,16 @@
 from dataclasses import (
     dataclass,
+    asdict,
 )
 import numpy as np
+import pandas as pd
 from pathlib import Path
 import pyloudnorm as pyln
 from typing import (
     Callable,
     Optional, 
     Set,
+    List,
 )
 import sys
 from scipy.io import wavfile
@@ -43,6 +46,10 @@ from models.asr.whisper import (
 from configs.base import (
     RUSSIAN_VOWELS,
     EPSILON,
+)
+
+from utils.dataclass import (
+    flatten_dict,
 )
 
 @dataclass
@@ -167,6 +174,7 @@ class HighLevelSpeechFeatures:
     def audio_init(
         cls,
         audio:Audio,
+        filter_speech:bool=True,
         transcriber:Optional[
             Callable[
                 [
@@ -181,9 +189,11 @@ class HighLevelSpeechFeatures:
         HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
         vowels:Set[str] = RUSSIAN_VOWELS,
         ): 
+        if filter_speech:
+            audio = cls.speech_filter(audio=audio)
         if audio._transcription is None and transcriber is None:
             raise Exception('audio._transcription is None and transcriber is None')
-        
+
         not_nan_quanity:int = np.count_nonzero(~np.isnan(np.array([audio.data])))
         are_all_zeros:bool = not np.any(audio.data)
         if not_nan_quanity == 0 or are_all_zeros:
@@ -209,57 +219,30 @@ class HighLevelSpeechFeatures:
             )
         )
 
-    # @classmethod
-    # def wav_path_init(
-    #     cls,
-    #     path:Path,
-    #     transcription:Optional[str],
-    #     transcriber:Callable[
-    #         [
-    #         torch.Tensor, 
-    #         int, 
-    #         WhisperProcessor, 
-    #         WhisperForConditionalGeneration
-    #         ], 
-    #         str,
-    #     ] = whisper_tensor_with_sr_transcription,
-    #     HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
-    #     vowels:Set[str] = RUSSIAN_VOWELS,
-    #     ):
-    #     audio:Audio = Audio.wav_file_path_init(
-    #         path=path,
-    #         transcription=transcription,
-    #     )
-    #     return cls.audio_init(
-    #         audio=audio,
-    #         transcriber=transcriber,
-    #         HF_threshold=HF_threshold,
-    #         vowels=vowels
-    #     )
-    #     # text:str = transcriber(path)
-
-    #     # return HighLevelSpeechFeatures(
-    #     #     loudness=cls._volume(
-    #     #         audio=audio,
-    #     #     ),
-    #     #     HF_power_ratio=cls._HF_power_ratio(
-    #     #         audio=audio,
-    #     #         HF_threshold=HF_threshold,
-    #     #     ),
-    #     #     pronounce_speed=cls._pronunciation_speed(
-    #     #         audio=audio,
-    #     #         vowels=RUSSIAN_VOWELS, 
-    #     #         transcriber=transcriber,
-    #     #     ),
-    #     #     transcription_features = TranscriptionHighLevelFeatures.text_init(
-    #     #         text=audio.joined_transcription(
-    #     #             transcriber=transcriber,
-    #     #         ),
-    #     #     )
-    #     # )
 
 
 @dataclass
 class HashHLF:
     hash:str
     features:Optional[HighLevelSpeechFeatures]
+
+def hash_HLF_list_2_df(
+    l:List[HashHLF],
+    )->pd.DataFrame:
+    l = list(filter(lambda x: x.features is not None, l))
+    
+    df:pd.DataFrame = pd.DataFrame(
+        index=map(
+            lambda x: x.hash, 
+            l,
+        ), 
+        data=filter(
+            lambda x: x is not None,
+            map(
+                lambda x: flatten_dict(asdict(x.features)) if x.features is not None else None, 
+                l,
+            ),
+        )
+    )
+    return df
+

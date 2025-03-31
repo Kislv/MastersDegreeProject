@@ -13,6 +13,7 @@ from typing import (
 )
 import torch
 import librosa
+import copy
 
 from transformers import (
     WhisperProcessor,
@@ -20,7 +21,7 @@ from transformers import (
 )
 
 from configs.base import (
-    RB_FILE_READING_MODE,
+    RB_OPEN_FILE_MODE,
     SECONDS_QUANTITY_IN_MINUTE,
     BREAK_LINE,
     RUSSIAN_VOWELS,
@@ -46,7 +47,7 @@ from processing.text.normalization import (
 class WAVFilePathInitArgs:
     path:Path
     transcription:Optional[str] = None
-    reading_mode:str = RB_FILE_READING_MODE
+    reading_mode:str = RB_OPEN_FILE_MODE
 
 @dataclass 
 class Audio:
@@ -78,7 +79,7 @@ class Audio:
         cls,
         # path:Path,
         # transcription:Optional[str] = None,
-        # reading_mode:str = RB_FILE_READING_MODE,
+        # reading_mode:str = RB_OPEN_FILE_MODE,
         arguments:WAVFilePathInitArgs
         ):
         if not arguments.path.exists():
@@ -163,13 +164,9 @@ class Audio:
         self,
         data:np.ndarray
         ):
-        return Audio(
-            sample_width=self.sample_width,
-            sr=self.sr,
-            n_frames=self.n_frames,
-            n_channels=self.n_channels,
-            data=data
-        )
+        self_copy:Audio = copy.deepcopy(self)
+        self_copy.data=data
+        return self_copy
     
     def sample_dtype(
         self,

@@ -3,7 +3,9 @@ from typing import (
 )
 
 EMPTY:str = ''
-RB_FILE_READING_MODE:str = 'rb'
+RB_OPEN_FILE_MODE:str = 'rb'
+WB_OPEN_FILE_MODE:str = 'wb'
+
 SPACE:str = ' '
 DOT:str = '.'
 SECONDS_QUANTITY_IN_MINUTE:int = 60
@@ -16,6 +18,10 @@ CSV:str = 'csv'
 JSONL:str = 'jsonl'
 PT:str = 'pt'
 
+DROP_DUPLICATES_KEEP_FIRST:str = 'first'
+
 EPSILON:float = 1e-6
 
 RUSSIAN_VOWELS:Set[str] = {'а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я'}
+
+JOIN_HOW_INNER:str = 'inner'

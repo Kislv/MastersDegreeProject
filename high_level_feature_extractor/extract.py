@@ -32,7 +32,7 @@ from configs.paths import (
 )
 
 from configs.base import (
-    RB_FILE_READING_MODE,
+    RB_OPEN_FILE_MODE,
     RUSSIAN_VOWELS,
     TAB,
 )
@@ -71,7 +71,7 @@ def raw_crowd_2_HLF(
     chunks_quantity:int = 10,
     rows_quantity:Optional[int] = None,
     output_file_path:Path = PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
-    reading_mode: str = RB_FILE_READING_MODE,
+    reading_mode: str = RB_OPEN_FILE_MODE,
     HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
     vowels:Set[str] = RUSSIAN_VOWELS,
     )->pd.Series:
@@ -82,6 +82,7 @@ def raw_crowd_2_HLF(
     
     arguments_list:List[WAVFilePathInitArgs] = []
     for hash in unique_hashes:
+        # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
         row:pd.Series = df[df.hash_id == hash].iloc[0]
         file_path:Path = wavs_dir_path / Path(row.audio_path).name
         
@@ -122,3 +123,6 @@ if __name__ == __main__.__name__:
         # rows_quantity=100,
         output_file_path=PROCESSED_DUSHA_CROWD_TEST_HLF_LAST_VERSION_FILE_PATH,
     )
+
+# Run script:
+# nohup python extract.py & disown
