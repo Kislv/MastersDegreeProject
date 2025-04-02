@@ -25,3 +25,5 @@ EPSILON:float = 1e-6
 RUSSIAN_VOWELS:Set[str] = {'а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я'}
 
 JOIN_HOW_INNER:str = 'inner'
+
+AGGREGATED_KEYWORD:str = 'aggregated'

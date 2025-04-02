@@ -10,6 +10,9 @@ from typing import (
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from dataclasses import (
+    dataclass,
+)
 import sys
 sys.path.append('..')
 
@@ -35,6 +38,7 @@ from configs.base import (
     RB_OPEN_FILE_MODE,
     RUSSIAN_VOWELS,
     TAB,
+    DROP_DUPLICATES_KEEP_FIRST,
 )
 from volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
@@ -44,6 +48,9 @@ from configs.paths import (
 )
 from utils.parallel_processing import (
     divide_into_chunks,
+)
+from configs.datasets.dusha import (
+    HASH_ID_COLUMN_NAME,
 )
 
 def AudioWAVFilePathInitArgs_2_HashHLF(
@@ -72,6 +79,8 @@ def raw_crowd_2_HLF(
     rows_quantity:Optional[int] = None,
     output_file_path:Path = PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
     reading_mode: str = RB_OPEN_FILE_MODE,
+    hash_col_name:str = HASH_ID_COLUMN_NAME,
+    drop_duplicates_keep:str = DROP_DUPLICATES_KEEP_FIRST,
     HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
     vowels:Set[str] = RUSSIAN_VOWELS,
     )->pd.Series:
@@ -79,20 +88,34 @@ def raw_crowd_2_HLF(
     print(f'len(unique_hashes) = {len(unique_hashes)}')
     if rows_quantity is not None:
         unique_hashes = unique_hashes[:rows_quantity]
-    
+    print('Start of processing arguments_list!')
     arguments_list:List[WAVFilePathInitArgs] = []
-    for hash in unique_hashes:
+    df = df.drop_duplicates(subset=hash_col_name, keep=drop_duplicates_keep)
+    for _, row in df.iterrows():
+
         # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
-        row:pd.Series = df[df.hash_id == hash].iloc[0]
+        # row:pd.Series = df[df.hash_id == hash].iloc[0]
         file_path:Path = wavs_dir_path / Path(row.audio_path).name
-        
-        arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
-            path=file_path, 
-            transcription=row.speaker_text, 
-            reading_mode=reading_mode,
-        )
-        arguments_list.append(arguments)
+        if isinstance(row.speaker_text, str):
+            arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
+                path=file_path, 
+                transcription=row.speaker_text, 
+                reading_mode=reading_mode,
+            )
+            arguments_list.append(arguments)
     
+    # for hash in unique_hashes:
+    #     # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
+    #     row:pd.Series = df[df.hash_id == hash].iloc[0]
+    #     file_path:Path = wavs_dir_path / Path(row.audio_path).name
+        
+    #     arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
+    #         path=file_path, 
+    #         transcription=row.speaker_text, 
+    #         reading_mode=reading_mode,
+    #     )
+    #     arguments_list.append(arguments)
+    print(f'End of processing arguments_list, len(arguments_list) = {len(arguments_list)}!')
     results:List[HashHLF] = []
 
     arguments_chunks:List[List[WAVFilePathInitArgs]] = divide_into_chunks(
@@ -103,7 +126,8 @@ def raw_crowd_2_HLF(
 
         with multiprocessing.Pool(processes=num_processes) as pool:
             
-            results_chunk:List[HashHLF] = list(pool.map(AudioWAVFilePathInitArgs_2_HashHLF, arguments_chunk))
+            results_chunk:List[HashHLF] = pool.map(AudioWAVFilePathInitArgs_2_HashHLF, arguments_chunk)
+            results_chunk = list(results_chunk)
             results += results_chunk
 
         series:pd.Series = pd.Series(map(lambda el: repr(el), results))
@@ -111,18 +135,40 @@ def raw_crowd_2_HLF(
         series.to_csv(output_file_path, index=False, header=False)
     return series
 
+@dataclass
+class raw_crowd_HLF_extracting_paths:
+    crowd_file_path:Path
+    wavs_dir_path:Path
+    output_file_path:Path
 
-
-if __name__ == __main__.__name__:  
-    raw_crowd:pd.DataFrame = pd.read_csv(DUSHA_CROWD_TEST_FILE_PATH, sep=TAB)
-    raw_crowd_2_HLF(
-        df=raw_crowd,
+def extract():
+    print('Start of the processing!')
+    num_processes:int = 40
+    chunks_quantity:int = 40
+    train_paths:raw_crowd_HLF_extracting_paths = raw_crowd_HLF_extracting_paths(
+        crowd_file_path=DUSHA_CROWD_TRAIN_FILE_PATH,
+        wavs_dir_path=DUSHA_CROWD_TRAIN_WAVS_DIR_PATH,
+        output_file_path=PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
+    )
+    test_paths:raw_crowd_HLF_extracting_paths = raw_crowd_HLF_extracting_paths(
+        crowd_file_path=DUSHA_CROWD_TEST_FILE_PATH,
         wavs_dir_path=DUSHA_CROWD_TEST_WAVS_DIR_PATH,
-        num_processes=20,
-        chunks_quantity=10,
-        # rows_quantity=100,
         output_file_path=PROCESSED_DUSHA_CROWD_TEST_HLF_LAST_VERSION_FILE_PATH,
     )
 
+    for paths in [train_paths, test_paths]:
+        raw_crowd:pd.DataFrame = pd.read_csv(paths.crowd_file_path, sep=TAB)
+        raw_crowd_2_HLF(
+            df=raw_crowd,
+            wavs_dir_path=paths.wavs_dir_path,
+            num_processes=num_processes,
+            chunks_quantity=chunks_quantity,
+            # rows_quantity=100,
+            output_file_path=paths.output_file_path,
+        )
+
+if __name__ == __main__.__name__:  
+    extract()
+
 # Run script:
-# nohup python extract.py & disown
+# nohup python extract.py > processes_outputs/HLF_extracting.out & disown

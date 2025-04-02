@@ -84,7 +84,9 @@ class HighLevelSpeechFeatures:
 
         n:int = len(signal_windowed)
         freq_magnitudes:np.ndarray = np.abs(np.fft.fft(signal_windowed))
-        freqs:np.ndarray = np.fft.fftfreq(n, d=1/audio.sr)
+        if audio.sr == 0:
+            return np.nan
+        freqs:np.ndarray = np.fft.fftfreq(n, d=1/(audio.sr))
 
         # Keep only positive frequencies (half the spectrum)
         positive_freqs:np.ndarray = freqs[:n//2]
@@ -110,6 +112,8 @@ class HighLevelSpeechFeatures:
 
         fft_result:np.ndarray = rfft(audio.data)
         fft_result_filtered:np.ndarray = fft_result.copy()
+        if audio.sr == 0:
+            return np.nan
         freqs:np.ndarray = np.fft.fftfreq(audio.n_frames, d=1.0/audio.sr)
 
         positive_freqs:np.ndarray = freqs[:len(freqs) // 2 + 1]

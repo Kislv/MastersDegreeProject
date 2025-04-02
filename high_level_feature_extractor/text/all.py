@@ -4,6 +4,7 @@ from typing import (
     List,
     Callable,
     Set,
+    Optional,
 )
 from high_level_feature_extractor.text.profanity import (
     text_2_is_contain_swear_words,
@@ -25,14 +26,18 @@ from processing.text.normalization import (
 from high_level_feature_extractor.text.meaning import (
     tf_idf_mean,
 )
-
+from high_level_feature_extractor.text.POS import (
+    POS_ratio,
+)
 
 @dataclass
 class TranscriptionHighLevelFeatures:
     mean_words_length:float
     # profanity_words_quantity:int
     profanity_words_ratio:float
-    meaning:float
+    # TODO preprocess, delete Nones
+    meaning:Optional[float] = None
+    POS_ratio:Optional[POS_ratio] = None
     @classmethod
     def text_init(
         cls,
@@ -69,5 +74,8 @@ class TranscriptionHighLevelFeatures:
             ) / len(words),
             meaning=tf_idf_mean(
                 text=normalized_text,
+            ),
+            POS_ratio=POS_ratio.text_init(
+                letters_and_seps_only_text=letters_and_seps_only,
             )
         )

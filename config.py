@@ -1,6 +1,5 @@
 RANDOM_SEED:int=42
 # DUSHA
-ANNOTATOR_EMOION_FIELD_NAME:str = 'annotator_emo'
 GOLDEN_EMOTION_FIELD_NAME:str = 'golden_emo'
 SPEAKER_TEXT_FIELD_NAME:str = 'speaker_text'
 AUDIO_PATH_FIELD_NAME:str = 'audio_path'
