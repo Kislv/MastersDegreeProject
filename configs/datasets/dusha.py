@@ -45,9 +45,10 @@ def aggregate_crowd(
     agg_col_name:str=ANNOTATOR_EMOION_FIELD_NAME,
     by_col_name:str=HASH_ID_COLUMN_NAME,
     aggregated_col_name:str=ANNOTATOR_AGGREGATED_FIELD_NAME,
-    )->pd.DataFrame:
+    )->pd.Series:
+    hash_id_2_annotator_emotion:pd.Series = pd.Series(index=df[by_col_name], data=df[agg_col_name])
     agg_func:Callable = partial(agg_func, agg_col_name=agg_col_name, aggregated_keyword=aggregated_col_name)
-    # Optimize using sort
-    groupped_by_df:pd.DataFrame = df.groupby(by=by_col_name).apply(agg_func, include_groups=False).dropna(subset=[aggregated_col_name])
-    groupped_by_df.index = groupped_by_df.index.map(lambda x: x[0])
-    return groupped_by_df
+    # TODO: Optimize using sort and pd.Series
+    # groupped_by_df:pd.DataFrame = df.groupby(by=by_col_name).apply(agg_fun
+    
+    return hash_id_2_annotator_emotion.groupby(hash_id_2_annotator_emotion.index).apply(aggregate_by_mode)
