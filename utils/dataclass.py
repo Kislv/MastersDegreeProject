@@ -2,32 +2,55 @@ import sys
 from typing import (
     Dict,
     Any,
+    Optional
 )
 sys.path.append('..')
 from configs.base import (
     DEFAULT_SEP,
 )
 
-def add_key_prefix_inplace(prefix:str, d:Dict[str, Any], sep:str = DEFAULT_SEP):
+def add_key_prefix_inplace(
+    prefix:Optional[str], 
+    d:Dict[str, Any], 
+    sep:str = DEFAULT_SEP,
+    ):
     keys = list(d.keys())
-
     for k in keys:
-        d[prefix + sep + k] = d.pop(k)
+        key:str = k
+        if prefix is not None:
+            key = prefix + sep + key
+        if key in d.keys():
+            print(f'key {key} already in dict!')
+        d[key] = d.pop(k)
     return d
 
-def flatten_dict(d:Dict[str,Any], name_sep:str = DEFAULT_SEP)->Dict[str, Any]:
-    flattened_dict:Dict[str, Any] = {}
-    # TODO to dome config
-    keys_collision_message:str = 'key already in flattened_dict!'
+def flatten_dict(
+    d:Dict[str, Any], 
+    name_sep:str = DEFAULT_SEP,
+    add_prefix:bool = True,
+    )->Dict[str, Any]:
+    result:Dict[str, Any] = {}
     for key, value in d.items():
-        if not isinstance(value, Dict):
-            if key in flattened_dict:
-                print(keys_collision_message)
-            flattened_dict[key] = value
-        else:
-            flattened_value:Dict[str,Any] = add_key_prefix_inplace(prefix=key, d=value.copy())
-            if len(set(flattened_value.keys()).intersection(set(flattened_dict.keys()))) > 0:
-                print(keys_collision_message)
+        if isinstance(value, Dict):
+            flattened_value:Dict[str, Any] = flatten_dict(
+                d=value,
+                name_sep=name_sep,
+                add_prefix=add_prefix,
+            )
+            if add_prefix:
+                add_key_prefix_inplace(
+                    prefix=key, 
+                    d=flattened_value, 
+                    sep=name_sep,
+                )
+            for value_key, value_value in flattened_value.items():
+                if value_key in result.keys():
+                    print(f'key {value_key} already in flattened_dict!')
+                result[value_key] = value_value
             
-            flattened_dict.update(flattened_value)
-    return flattened_dict
+        else:
+            if key in result.keys():
+                print(f'key {key} already in flattened_dict!')
+            result[key] = value
+            
+    return result

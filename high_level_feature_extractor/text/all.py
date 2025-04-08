@@ -27,7 +27,7 @@ from high_level_feature_extractor.text.meaning import (
     tf_idf_mean,
 )
 from high_level_feature_extractor.text.POS import (
-    POS_ratio,
+    POS_ratio as POS_ratio_class,
 )
 
 @dataclass
@@ -37,7 +37,7 @@ class TranscriptionHighLevelFeatures:
     profanity_words_ratio:float
     # TODO preprocess, delete Nones
     meaning:Optional[float] = None
-    POS_ratio:Optional[POS_ratio] = None
+    POS_ratio:Optional[POS_ratio_class] = None
     @classmethod
     def text_init(
         cls,
@@ -75,7 +75,7 @@ class TranscriptionHighLevelFeatures:
             meaning=tf_idf_mean(
                 text=normalized_text,
             ),
-            POS_ratio=POS_ratio.text_init(
+            POS_ratio=POS_ratio_class.text_init(
                 letters_and_seps_only_text=letters_and_seps_only,
             )
         )

@@ -1,6 +1,8 @@
 from dataclasses import (
     dataclass,
     asdict,
+    is_dataclass,
+    fields,
 )
 import numpy as np
 import pandas as pd
@@ -230,6 +232,7 @@ class HashHLF:
     hash:str
     features:Optional[HighLevelSpeechFeatures]
 
+
 def hash_HLF_list_2_df(
     l:List[HashHLF],
     )->pd.DataFrame:
@@ -243,7 +246,13 @@ def hash_HLF_list_2_df(
         data=filter(
             lambda x: x is not None,
             map(
-                lambda x: flatten_dict(asdict(x.features)) if x.features is not None else None, 
+                lambda x: flatten_dict(
+                        flatten_dict(
+                        asdict(
+                            x.features,
+                        )
+                    ) 
+                ) if x.features is not None else None, 
                 l,
             ),
         )
