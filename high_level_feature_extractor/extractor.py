@@ -13,6 +13,7 @@ from typing import (
     Optional, 
     Set,
     List,
+    Dict,
 )
 import sys
 from scipy.io import wavfile
@@ -259,3 +260,31 @@ def hash_HLF_list_2_df(
     )
     return df
 
+HLF_ENG_NAME_2_RU_NAME:Dict[str,str] = {
+    'loudness': 'средняя громкость',
+    'HF_power_ratio': 'доля мощности высокочастотных составляющих речи',
+    'pronounce_speed_WPS': 'средняяскорость произношения (слов в секунду)',
+    'pronounce_speed_LPS': 'средняяскорость произношения (букв в секунду)',
+    'pronounce_speed_SPS': 'средняя скорость произношения (слогов в секунду)',
+    'transcription_features_mean_words_length': 'средняя длина слова',
+    'transcription_features_profanity_words_ratio': 'доля ненормативных слов',
+    'transcription_features_meaning': 'средняя значимость слова',
+    'transcription_features_POS_ratio_ADVB': 'доля наречий (кроме наречий времени)',
+    'transcription_features_POS_ratio_COMP': 'доля компаративов', # Слова "лучше", "получше", "выше" относятся к сравнительной степени прилагательных и наречий. Сравнительная степень прилагательного "хороший" (пример: Этот вариант лучше → прилагательное). Сравнительная степень наречия "хорошо" (пример: Она поёт лучше → наречие).
+    'transcription_features_POS_ratio_CONJ': 'доля союзов',
+    'transcription_features_POS_ratio_GRND': 'доля деепричастий',
+    'transcription_features_POS_ratio_INFN': 'доля глаголов-инфинитивов',
+    'transcription_features_POS_ratio_INTJ': 'доля междометий',
+    'transcription_features_POS_ratio_PRCL': 'доля частиц',
+    'transcription_features_POS_ratio_PRED': 'доля предикативов', # TODO: ensure it is Union["Наречие времени", "Наречие времени (устаревшее)"]
+    'transcription_features_POS_ratio_PREP': 'доля предлогов',
+    'transcription_features_POS_ratio_VERB': 'доля глаголов в личной форме',
+    'transcription_features_POS_ratio_ADJS': 'доля кратких прилагательных',
+    'transcription_features_POS_ratio_PRTS': 'доля кратких причастий',
+    'transcription_features_POS_ratio_NPRO': 'доля местоимений-существительных',
+    'transcription_features_POS_ratio_NOUN': 'доля существительных',
+    'transcription_features_POS_ratio_ADJF': 'доля полных прилагательных',
+    'transcription_features_POS_ratio_NUMR': 'доля числительных',
+    'transcription_features_POS_ratio_PRTF': 'доля полных причастий',
+    'transcription_features_POS_ratio_NONE': 'доля слов с неопределенной частью речи',
+}

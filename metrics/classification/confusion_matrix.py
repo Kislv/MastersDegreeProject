@@ -41,17 +41,19 @@ def plot_confusion_matrix(
     title:Optional[str] = CONFUSION_MATRIX_DEFAULT_TITLE,
     cmap:str=DEFAULT_CMAP,
     ):
+    if class_names is None:
+        class_names = list(set(y_true).union(set(y_pred)))
     cm:np.ndarray = confusion_matrix(
         y_true=y_true, 
         y_pred=y_pred, 
+        labels=class_names,
         sample_weight=weights, 
         normalize=normalize,
     )
     disp:ConfusionMatrixDisplay = ConfusionMatrixDisplay(cm, display_labels=class_names)
     disp.plot(cmap=cmap)
     disp.ax_.invert_yaxis()
-    # plt.xlabel()
-    # plt.ylabel()
+    plt.grid(False)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -64,10 +66,12 @@ def plot_confusion_matrices(
     class_names:Optional[List[str]] = None,
     xlabel:Optional[str] = CONFUSION_MATRIX_DEFAULT_XLABEL,
     ylabel:Optional[str] = CONFUSION_MATRIX_DEFAULT_YLABEL,
-    title:Optional[str] = CONFUSION_MATRIX_DEFAULT_TITLE,
+    title:Optional[str] = None, # CONFUSION_MATRIX_DEFAULT_TITLE
     cmap:str=DEFAULT_CMAP,
     sep:str = DOT + SPACE,
     ):
+    if class_names is None:
+        class_names = list(set(y_true).union(set(y_pred)))
 
     # TODO: to config
     normalize_type_2_title:Dict[str, str] = {
@@ -88,7 +92,7 @@ def plot_confusion_matrices(
             normalize=normalize_type,
             xlabel=xlabel,
             ylabel=ylabel,
-            title=sep.join([title, title_postfix]),
+            title=sep.join(filter(lambda x: x is not None, [title, title_postfix])),
             cmap=cmap,
         )
 
@@ -131,21 +135,23 @@ def show_all_classification_metrics(
     y_pred: pd.Series, 
     weights: Optional[Iterable[float]] = None,
     class_names: Optional[List[str]] = None,
+    plot_cm:bool=True,
     xlabel: Optional[str] = CONFUSION_MATRIX_DEFAULT_XLABEL,
     ylabel: Optional[str] = CONFUSION_MATRIX_DEFAULT_YLABEL,
-    title: Optional[str] = CONFUSION_MATRIX_DEFAULT_TITLE,
+    title: Optional[str] = None, # CONFUSION_MATRIX_DEFAULT_TITLE
     cmap: str = DEFAULT_CMAP,
     sep: str = DOT + SPACE
     ) -> None:
     print(classification_report(y_true=y_true, y_pred=y_pred, target_names=class_names))
-    plot_confusion_matrices(
-        y_true=y_true,
-        y_pred=y_pred,
-        weights=weights,
-        class_names=class_names,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        title=title,
-        cmap=cmap,
-        sep=sep,
-    )
+    if plot_cm:
+        plot_confusion_matrices(
+            y_true=y_true,
+            y_pred=y_pred,
+            weights=weights,
+            class_names=class_names,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            title=title,
+            cmap=cmap,
+            sep=sep,
+        )

@@ -19,7 +19,7 @@ class POS_ratio:
     VERB:float = 0. # Verb (finite form)
     ADJS:float = 0. # Short form adjective
     PRTS:float = 0. # Short form participle
-    NPRO:float = 0.
+    NPRO:float = 0. # Noun-like Pronoun
 
 # Tags with case declension:
 # For parts of speech that undergo declension, grammatical cases are included:

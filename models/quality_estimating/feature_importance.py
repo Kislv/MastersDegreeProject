@@ -19,3 +19,4 @@ def normalized_feature_importance(
         )
     result = result.apply(lambda x: round(x, 3))
     return result
+
