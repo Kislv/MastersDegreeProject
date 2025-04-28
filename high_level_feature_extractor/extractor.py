@@ -30,10 +30,10 @@ sys.path.append('..')
 from models.asr.whisper import (
     whisper_audio_file_2_transcription,
 )
-from volume.human_speech import (
+from high_level_feature_extractor.volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
 )
-from volume.human_speech import (
+from high_level_feature_extractor.volume.human_speech import (
     HUMAN_SPEECH_FREQ_BOTTOM,
     HUMAN_SPEECH_FREQ_TOP,
     HIGH_FREQUENCY_SPEECH_THRESHOLD,

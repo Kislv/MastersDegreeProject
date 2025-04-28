@@ -40,7 +40,7 @@ from configs.base import (
     TAB,
     DROP_DUPLICATES_KEEP_FIRST,
 )
-from volume.human_speech import (
+from high_level_feature_extractor.volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
 )
 from configs.paths import (

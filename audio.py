@@ -29,10 +29,6 @@ from configs.base import (
     EMPTY,
 )
 
-from high_level_feature_extractor.text.all import (
-    TranscriptionHighLevelFeatures,
-)
-
 from models.asr.whisper import (
     # whisper_audio_file_2_transcription,
     whisper_tensor_with_sr_transcription,
