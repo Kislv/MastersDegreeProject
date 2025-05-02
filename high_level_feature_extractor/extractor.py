@@ -263,8 +263,8 @@ def hash_HLF_list_2_df(
 HLF_ENG_NAME_2_RU_NAME:Dict[str,str] = {
     'loudness': 'средняя громкость',
     'HF_power_ratio': 'доля мощности высокочастотных составляющих речи',
-    'pronounce_speed_WPS': 'средняяскорость произношения (слов в секунду)',
-    'pronounce_speed_LPS': 'средняяскорость произношения (букв в секунду)',
+    'pronounce_speed_WPS': 'средняя скорость произношения (слов в секунду)',
+    'pronounce_speed_LPS': 'средняя скорость произношения (букв в секунду)',
     'pronounce_speed_SPS': 'средняя скорость произношения (слогов в секунду)',
     'transcription_features_mean_words_length': 'средняя длина слова',
     'transcription_features_profanity_words_ratio': 'доля ненормативных слов',
