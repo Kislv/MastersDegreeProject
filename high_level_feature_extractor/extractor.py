@@ -288,3 +288,5 @@ HLF_ENG_NAME_2_RU_NAME:Dict[str,str] = {
     'transcription_features_POS_ratio_PRTF': 'доля полных причастий',
     'transcription_features_POS_ratio_NONE': 'доля слов с неопределенной частью речи',
 }
+
+HLF_ENG_2_RU_RENAMER:Callable[[str], str] = lambda x: HLF_ENG_NAME_2_RU_NAME[x]

@@ -9,6 +9,7 @@ from slovnet.model.emb import NavecEmbedding
 from typing import (
     Union,
     List,
+    Optional,
 )
 import sys
 
@@ -40,35 +41,42 @@ def word_to_emb(
         emb:NavecEmbedding=EMB, 
         vocabular:vocab.Vocab=VOCAB, 
         embedding_size:int=NAVEC_EMBEDDINGS_SIZE,
-        ) -> torch.Tensor:
+        ) -> Optional[torch.Tensor]:
     def single_word_to_emb(
         word:str,
         emb:NavecEmbedding = EMB,
         vocabular:vocab.Vocab = VOCAB,
-        )->torch.Tensor:
-        return emb(torch.tensor(vocabular[word]))
+        )->Optional[torch.Tensor]:
+        try:
+            return emb(torch.tensor(vocabular[word]))
+        except KeyError:
+            return
+    # embedding_stub:torch.Tensor = torch.zeros((1, embedding_size))
     if type(word_or_words) == list:
         result = []
         for word in word_or_words:
-            try:
-                word_emb:torch.Tensor = single_word_to_emb(
-                    word=word,
-                    emb=emb, 
-                    vocabular=vocabular,
-                )
-            except KeyError:
-                continue
-            result.append(word_emb)
+            word_emb:Optional[torch.Tensor] = single_word_to_emb(
+                word=word,
+                emb=emb, 
+                vocabular=vocabular,
+            )
+            if word_emb is not None:
+                result.append(word_emb)
         if len(result) != 0:
             return torch.stack(result)
         else:
-            return torch.zeros((1, embedding_size))
+            return
+            # return embedding_stub
     else:
-        return single_word_to_emb(
+        word_emb:Optional[torch.Tensor] = single_word_to_emb(
             word=word_or_words,
             emb=emb, 
             vocabular=vocabular, 
         )
+        return word_emb
+        # if word_emb is None:
+        #     word_emb = embedding_stub
+        # return word_emb
 
 def text_2_unified_tensor(
     text: str, 
@@ -121,10 +129,10 @@ def texts_series_2_tensor(
     return concatted_texts_embeddings
 
 def bag_of_words(
-        words: list[str], 
-        emb:NavecEmbedding = EMB, 
-        vocabular:vocab.Vocab = VOCAB, 
-        embedding_size = NAVEC_EMBEDDINGS_SIZE,
+    words: list[str], 
+    emb:NavecEmbedding = EMB, 
+    vocabular:vocab.Vocab = VOCAB, 
+    embedding_size = NAVEC_EMBEDDINGS_SIZE,
     ) -> torch.Tensor:
     word_embeddings:torch.Tensor = word_to_emb(
         emb=emb, 
