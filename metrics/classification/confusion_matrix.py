@@ -11,8 +11,12 @@ from sklearn.metrics import (
     confusion_matrix,
     classification_report,
     ConfusionMatrixDisplay,
+    roc_curve, 
+    auc,
 )
-
+from sklearn.preprocessing import (
+    label_binarize,
+)
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
@@ -96,62 +100,4 @@ def plot_confusion_matrices(
             cmap=cmap,
         )
 
-# def plot_confusion_matrix(
-#     y_true: pd.Series, 
-#     y_pred: pd.Series, 
-#     class_names: List[str],
-#     normalize:Optional[str] = DEFAULT_NORMALIZE,
-#     ) -> None:
-#     """
-#     Plots a confusion matrix for multiclass classification results.
 
-#     Parameters:
-#     y_true (pd.Series): The true labels.
-#     y_pred (pd.Series): The predicted labels.
-#     class_names (List[str]): The names of the classes.
-
-#     Returns:
-#     None: Displays the confusion matrix plot.
-#     """
-    
-#     # Compute confusion matrix
-#     cm = confusion_matrix(y_true, y_pred, labels=[i for i in range(len(class_names))], normalize=normalize) # 
-
-#     # Create a heatmap for the confusion matrix
-#     plt.figure(figsize=(10, 8))
-#     sns.heatmap(cm, annot=True, cmap=DEFAULT_CMAP, xticklabels=class_names, yticklabels=class_names)
-    
-#     # Labels and title
-#     plt.xlabel('Предсказанные значения')
-#     plt.ylabel('Эталонные значения')
-#     plt.title('матрица неточностей')
-    
-#     # Show the plot
-#     plt.show()
-    
-
-def show_all_classification_metrics(
-    y_true: pd.Series, 
-    y_pred: pd.Series, 
-    weights: Optional[Iterable[float]] = None,
-    class_names: Optional[List[str]] = None,
-    plot_cm:bool=True,
-    xlabel: Optional[str] = CONFUSION_MATRIX_DEFAULT_XLABEL,
-    ylabel: Optional[str] = CONFUSION_MATRIX_DEFAULT_YLABEL,
-    title: Optional[str] = None, # CONFUSION_MATRIX_DEFAULT_TITLE
-    cmap: str = DEFAULT_CMAP,
-    sep: str = DOT + SPACE
-    ) -> None:
-    print(classification_report(y_true=y_true, y_pred=y_pred, target_names=class_names))
-    if plot_cm:
-        plot_confusion_matrices(
-            y_true=y_true,
-            y_pred=y_pred,
-            weights=weights,
-            class_names=class_names,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            title=title,
-            cmap=cmap,
-            sep=sep,
-        )
