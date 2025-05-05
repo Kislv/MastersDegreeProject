@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from typing import (
     Iterable,
     Optional,
@@ -28,6 +29,14 @@ from metrics.classification.ROC_AUC import (
 
 def pred_proba_2_pred(pred_proba:pd.DataFrame) -> pd.Series:
     return pd.Series(pred_proba.values.argmax(axis=1), index=pred_proba.index).apply(lambda x: pred_proba.columns[x])
+
+def macro_accuracy(y_true:pd.Series, y_pred:pd.Series) -> float:
+    metric_vals:List[float] = []
+    for class_name, group in y_true.groupby(by=y_true):
+        metric_val:float = accuracy_score(group, y_pred[group.index])
+        metric_vals.append(metric_val)
+        print(class_name, metric_val)
+    return np.mean(metric_vals)
 
 def show_all_classification_metrics(
     y_true: pd.Series, 
