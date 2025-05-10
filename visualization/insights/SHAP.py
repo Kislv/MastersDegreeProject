@@ -3,6 +3,7 @@ from typing import (
     List,
     Optional,
     Iterable,
+    Union,
 )
 import pandas as pd
 import numpy as np
@@ -94,3 +95,41 @@ def feature_shap_dependence_plot(
             ax.set_xlabel('')
     plt.tight_layout()
     plt.show()
+
+def shap_row_waterfall_plot(
+    tree_model:Any,
+    row_index:Any,
+    X:pd.DataFrame,
+    y:pd.Series,
+    cols_names:Optional[Iterable[str]] = None,
+    # top_important_k:int = 10 # TODO: extract k most important, visualize them, other features sum up and name f'{m} other features'
+    ):
+
+    # row_index:str = '4bd5a9c05848ff92c9a002d92604714f'
+    true_label:str = y[row_index]
+    explainer = shap.TreeExplainer(model=tree_model)
+    shap_values = explainer.shap_values(X[X.index == row_index])
+
+    class_idx:int = pd.Index(tree_model.classes_).get_loc(true_label) 
+    # if isinstance(shap_values, list):
+    #     # For multiclass, pick the class index you want to explain
+    #     shap_values_row = shap_values[class_idx][0]
+    #     class_name = tree_model.classes_[class_idx]
+    # else:
+    shap_values_row = shap_values[0]
+    class_name = tree_model.classes_[class_idx]
+
+    plt.figure(figsize=(10, 6))
+
+    plt.title(f'Значения Шепли для конкретной записи. Предсказанный класс - {class_name}, истинный класс - {true_label}')
+    plt.tight_layout()
+
+    shap.plots.waterfall(
+        shap.Explanation(
+            # values=shap_values_row[:top_important_k,0], # not sorted by importance
+            values=shap_values_row[:,0],
+            base_values=explainer.expected_value[class_idx] if isinstance(explainer.expected_value, (list, np.ndarray)) else explainer.expected_value,
+            data=X.loc[row_index],
+            feature_names=cols_names,
+        )
+    )
