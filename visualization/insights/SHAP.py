@@ -1,11 +1,15 @@
 from typing import (
     Any,
     List,
+    Optional,
+    Iterable,
 )
 import pandas as pd
 import numpy as np
 import shap
 from matplotlib import pyplot as plt
+import matplotlib
+
 
 def shap_tree_feature_importance(
     model:Any,
@@ -40,5 +44,53 @@ def shap_tree_feature_importance(
     plt.yticks(fontsize=10)
     plt.grid(axis='x', linestyle='--', alpha=0.6)
 
+    plt.tight_layout()
+    plt.show()
+    
+# index = df.columns.get_loc('B')
+def feature_shap_dependence_plot(
+    tree_model:Any,
+    X:pd.DataFrame,
+    y:pd.Series,
+    feature_name:str, # mean_volumne
+    feature_interaction_name:str,
+    cols_names:Optional[Iterable[str]] = None,
+    ):
+    feature_index:int = X.columns.get_loc(feature_name)
+    feature_interaction_index:int = X.columns.get_loc(feature_interaction_name)
+    explainer:shap.explainers._tree.TreeExplainer = shap.TreeExplainer(tree_model)
+    shap_values:np.ndarray = explainer.shap_values(
+        X=X,
+        y=y,
+    )
+    n_classes:int = len(tree_model.classes_)
+    _, axes = plt.subplots(nrows=n_classes, ncols=1, figsize=(10, 5*n_classes))
+
+    if cols_names is None:
+        cols_names = X.columns
+    
+    for class_idx in range(n_classes):
+        plt.sca(axes[class_idx])  # Set the current axis
+        shap_values_for_class = shap_values[:, :, class_idx] 
+        ax:matplotlib.axes._axes.Axes = axes[class_idx]
+        shap.dependence_plot(
+            feature_index, 
+            shap_values_for_class,
+            X,
+            feature_names=cols_names,
+            title=tree_model.classes_[class_idx],
+            interaction_index=feature_interaction_index,
+            ax=ax,
+            show=False,
+        )
+        ax.figure.set_size_inches(12, 15)
+        if class_idx == n_classes//2:
+            ax.set_ylabel('Значение Шепли')
+        else:
+            ax.set_ylabel(f'')
+        if class_idx == n_classes-1:
+            ax.set_xlabel(cols_names[feature_index])
+        else: 
+            ax.set_xlabel('')
     plt.tight_layout()
     plt.show()

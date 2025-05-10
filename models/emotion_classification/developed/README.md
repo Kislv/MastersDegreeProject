@@ -1,8 +1,8 @@
 # Градиентный бустинг
 
-* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/Ryg5FBzU678f2g) 
+* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/Ryg5FBzU678f2g).
 
-* Чтение модели
+* Код чтение модели:
 
 ```python
 import pickle
@@ -15,9 +15,9 @@ with open('model.pkl', 'rb') as f:
 
 # Дерево решений
 
-* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/gKmRMyEMaKKFKQ)
+* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/gKmRMyEMaKKFKQ).
 
-* Чтение модели
+* Код чтение модели:
 
 ```python
 import pickle
