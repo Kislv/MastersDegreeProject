@@ -1,4 +1,5 @@
 import pandas as pd
+
 from sklearn.metrics import (
     classification_report,
 )
@@ -7,7 +8,9 @@ from typing import (
     List,
     Dict,
     Any,
+    Optional,
 )
+
 
 SKLEARN_ACCURACY_METRIC_NAME:str = 'accuracy'
 SKLEARN_SUPPORT_METRIC_NAME:str = 'support'
@@ -28,6 +31,7 @@ def classification_report_formatted(
     support_metric_name:str = SKLEARN_SUPPORT_METRIC_NAME,
     dataframe_style:List[Dict[Any,Any]] = DATAFRAME_STYLES,
     table_format:str = TABLE_FORMAT,
+    image_path:Optional[Path] = None,
     )->pd.DataFrame:
     classification_report_table:pd.DataFrame = pd.DataFrame(classification_report(y_true=y_true, y_pred=y_pred, output_dict=True))
     if drop_accuracy:

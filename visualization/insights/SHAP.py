@@ -105,17 +105,12 @@ def shap_row_waterfall_plot(
     # top_important_k:int = 10 # TODO: extract k most important, visualize them, other features sum up and name f'{m} other features'
     ):
 
-    # row_index:str = '4bd5a9c05848ff92c9a002d92604714f'
     true_label:str = y[row_index]
     explainer = shap.TreeExplainer(model=tree_model)
     shap_values = explainer.shap_values(X[X.index == row_index])
 
     class_idx:int = pd.Index(tree_model.classes_).get_loc(true_label) 
-    # if isinstance(shap_values, list):
-    #     # For multiclass, pick the class index you want to explain
-    #     shap_values_row = shap_values[class_idx][0]
-    #     class_name = tree_model.classes_[class_idx]
-    # else:
+
     shap_values_row = shap_values[0]
     class_name = tree_model.classes_[class_idx]
 
@@ -131,5 +126,6 @@ def shap_row_waterfall_plot(
             base_values=explainer.expected_value[class_idx] if isinstance(explainer.expected_value, (list, np.ndarray)) else explainer.expected_value,
             data=X.loc[row_index],
             feature_names=cols_names,
-        )
+        ),
+        # color=plt.cm.Greys,  # <-- here is the change to greyscale
     )
