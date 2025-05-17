@@ -65,16 +65,14 @@ def corr_table_and_most_correlated_features_sets_to_features_2_drop(
         features_2_drop.extend(list(map(lambda x: x[0], feature_name_2_abs_corr_sum[1:])))
     return features_2_drop
 
-def drop_most_correlated_features(
+def most_correlated_features_to_drop(
     X:pd.DataFrame,
     correlation_threshold:float = CORRELATION_THRESHOLD_TO_DROP,
-    ) -> pd.DataFrame:
+    ) -> List[str]:
     most_correlated_features_pairs_list:List[List[str]] = features_table_2_correlated_features_pairs_list(X=X, correlation_threshold=correlation_threshold)
     correlated_features_sets:List[Set[str]] = pairs_list_2_sets(pairs_list=most_correlated_features_pairs_list)
     features_2_drop:List[str] = corr_table_and_most_correlated_features_sets_to_features_2_drop(
         corr_table=X.corr(), 
         correlated_features_sets=correlated_features_sets,
     )
-    print(f'features_2_drop = {features_2_drop}')
-    return X.drop(features_2_drop, axis=1)
-    
+    return features_2_drop

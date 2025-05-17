@@ -94,7 +94,6 @@ def raw_crowd_2_HLF(
     for _, row in df.iterrows():
 
         # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
-        # row:pd.Series = df[df.hash_id == hash].iloc[0]
         file_path:Path = wavs_dir_path / Path(row.audio_path).name
         if isinstance(row.speaker_text, str):
             arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
@@ -136,21 +135,22 @@ def raw_crowd_2_HLF(
     return series
 
 @dataclass
-class raw_crowd_HLF_extracting_paths:
+class RawCrowdHLFExtractingPaths:
     crowd_file_path:Path
     wavs_dir_path:Path
     output_file_path:Path
 
-def extract():
+def extract(
+    num_processes:int = 40,
+    chunks_quantity:int = 40,
+    ):
     print('Start of the processing!')
-    num_processes:int = 40
-    chunks_quantity:int = 40
-    train_paths:raw_crowd_HLF_extracting_paths = raw_crowd_HLF_extracting_paths(
+    train_paths:RawCrowdHLFExtractingPaths = RawCrowdHLFExtractingPaths(
         crowd_file_path=DUSHA_CROWD_TRAIN_FILE_PATH,
         wavs_dir_path=DUSHA_CROWD_TRAIN_WAVS_DIR_PATH,
         output_file_path=PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
     )
-    test_paths:raw_crowd_HLF_extracting_paths = raw_crowd_HLF_extracting_paths(
+    test_paths:RawCrowdHLFExtractingPaths = RawCrowdHLFExtractingPaths(
         crowd_file_path=DUSHA_CROWD_TEST_FILE_PATH,
         wavs_dir_path=DUSHA_CROWD_TEST_WAVS_DIR_PATH,
         output_file_path=PROCESSED_DUSHA_CROWD_TEST_HLF_LAST_VERSION_FILE_PATH,

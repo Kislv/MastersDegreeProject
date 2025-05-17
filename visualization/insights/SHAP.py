@@ -41,7 +41,7 @@ def shap_tree_feature_importance(
         fontsize=12,
     )
     plt.ylabel('Признаки', fontsize=12)
-    plt.title('Важность признаков, основанная на значениях Шепли', fontsize=14)
+    print('Важность признаков, основанная на значениях Шепли')
     plt.yticks(fontsize=10)
     plt.grid(axis='x', linestyle='--', alpha=0.6)
 
@@ -116,7 +116,7 @@ def shap_row_waterfall_plot(
 
     plt.figure(figsize=(10, 6))
 
-    plt.title(f'Значения Шепли для конкретной записи. Предсказанный класс - {class_name}, истинный класс - {true_label}')
+    print(f'Значения Шепли для конкретной записи. Предсказанный класс - {class_name}, истинный класс - {true_label}')
     plt.tight_layout()
 
     shap.plots.waterfall(

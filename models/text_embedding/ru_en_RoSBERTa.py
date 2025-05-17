@@ -3,11 +3,10 @@ import sys
 
 sys.path.append('../..')
 from models.config import (
-    CUDA_KEYWORD,
-    CPU_KEYWORD,
+    MOST_EFFECTIVE_AVAILABLE_DEVICE,
 )
 
-DEVICE:torch.device = torch.device(CUDA_KEYWORD if torch.cuda.is_available() else CPU_KEYWORD)
+DEVICE:torch.device = MOST_EFFECTIVE_AVAILABLE_DEVICE
 
 NORMALIZE_P:int = 2
 NORMALIZE_DIM:int = 1
