@@ -18,6 +18,13 @@ from models.config import (
 )
 
 SEPFORMER_DEVICE_FIELD_NAME:str = 'device'
+
+@dataclass 
+class VQEArgs:
+    input_file_path:Path
+    output_file_path:Path
+    open_file_mode:str=RB_OPEN_FILE_MODE
+
 @dataclass
 class Sepformer:
     _model:separator
@@ -40,18 +47,18 @@ class Sepformer:
         )
     def apply_VQE(
         self,
-        input_file_path:Path,
-        output_file_path:Path,
-        open_file_mode:str=RB_OPEN_FILE_MODE,
+        arguments:VQEArgs,
         )->None:
         # Perform speech enhancement (separation)
-        est_sources:torch.Tensor = self._model.separate_file(path=str(input_file_path))
+        est_sources:torch.Tensor = self._model.separate_file(path=str(arguments.input_file_path))
         # est_sources shape: (batch, channels, samples)
         # The first channel (index 0) is usually the enhanced speech
-        enhanced_audio:torch.Tensor = est_sources[:, :, 0].detach().cpu()
+        enhanced_audio:torch.Tensor = est_sources[:, :, 0].detach().cpu() # [:, :, 0] - main/enhanced speech (the "target" speaker or the cleanest signal).
 
-        with wave.open(str(input_file_path), open_file_mode) as wav_file:
+        with wave.open(str(arguments.input_file_path), arguments.open_file_mode) as wav_file:
             sr:int = wav_file.getframerate()
         # Save the enhanced audio to a new WAV file with 16 kHz sampling rate
-        torchaudio.save(output_file_path, enhanced_audio, sr) # SR from readed file
+        torchaudio.save(arguments.output_file_path, enhanced_audio, sr) # SR from readed file
+        del est_sources
+        torch.cuda.empty_cache()
 
