@@ -30,6 +30,6 @@ def tf_idf_mean(
     tfidf_matrix = vectorizer.transform([text])
 
     tfidf_dense = tfidf_matrix.toarray()
-    mean_tfidf_values = np.mean(tfidf_dense, axis=1)
+    mean_tfidf_value:float = float(np.mean(tfidf_dense, axis=1)[0])
 
-    return mean_tfidf_values[0]
+    return mean_tfidf_value

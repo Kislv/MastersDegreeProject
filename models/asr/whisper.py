@@ -9,12 +9,19 @@ from transformers import (
     WhisperForConditionalGeneration,
 )
 from huggingface_hub import snapshot_download
+from typing import (
+    List,
+)
 import sys
-
+from dataclasses import dataclass
 sys.path.append('../..')
 from configs.paths import (
     # WHISPER_MEDIUM_DIR_PATH,
     WHISPER_LARGE_DIR_PATH as WHISPER_DIR_PATH,
+    PROCESSED_DUSHA_CROWD_TRANSCRIPTIONS_DIR_PATH,
+)
+from configs.base import (
+    DOT_CSV,
 )
 from models.config import (
     TORCH_TENSORS_KEYWOED,
@@ -23,13 +30,14 @@ from models.config import (
 
 # load model and processor
 # WHISPER_MODEL_NAME:str = 'openai/whisper-medium'
-WHISPER_MODEL_NAME:str = 'openai/whisper-large-v3'
-# WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(WHISPER_MODEL_NAME)
-# WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(WHISPER_MODEL_NAME)
+WHISPER_LARGE_V3_MODEL_NAME:str = 'openai/whisper-large-v3'
+WHISPER_LARGE_MODEL_NEEDED_RAM:int = 27 *  (1024 ** 3)
+# WHISPER_PROCESSOR = WhisperProcessor.from_pretrained(WHISPER_LARGE_V3_MODEL_NAME)
+# WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(WHISPER_LARGE_V3_MODEL_NAME)
 WHISPER_PROCESSOR = None
 WHISPER_MODEL = None
 # WHISPER_MODEL.config.forced_decoder_ids = None
-
+PROCESSED_DUSHA_CROWD_TRANSCRIPTIONS_WHISPER_LARGE_V3_FILE_PATH:Path = PROCESSED_DUSHA_CROWD_TRANSCRIPTIONS_DIR_PATH / (Path(WHISPER_LARGE_V3_MODEL_NAME).name + DOT_CSV)
 
 # Define model name and local directory
 # WHISPER_MEDIUM_DIR_PATH:Path = Path('/data01/vvkiselev/data/dpl/models/whisper_medium')
@@ -37,54 +45,74 @@ WHISPER_MODEL = None
 # Download model files to local directory if not already downloaded
 if not os.path.exists(WHISPER_DIR_PATH):
     snapshot_download(
-        repo_id=WHISPER_MODEL_NAME, 
+        repo_id=WHISPER_LARGE_V3_MODEL_NAME, 
         local_dir=WHISPER_DIR_PATH,
     )
 
 # Load model and processor from local directory
-WHISPER_PROCESSOR:transformers.models.whisper.processing_whisper.WhisperProcessor = WhisperProcessor.from_pretrained(WHISPER_DIR_PATH)
 # WHISPER_MODEL:transformers.models.whisper.modeling_whisper.WhisperForConditionalGeneration = WhisperForConditionalGeneration.from_pretrained(WHISPER_DIR_PATH)
-WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(WHISPER_DIR_PATH).to(MOST_EFFECTIVE_AVAILABLE_DEVICE)
-WHISPER_MODEL.config.forced_decoder_ids = None
+# WHISPER_PROCESSOR:transformers.models.whisper.processing_whisper.WhisperProcessor = WhisperProcessor.from_pretrained(WHISPER_DIR_PATH)
+# WHISPER_MODEL = WhisperForConditionalGeneration.from_pretrained(WHISPER_DIR_PATH).to(MOST_EFFECTIVE_AVAILABLE_DEVICE)
+# WHISPER_MODEL.config.forced_decoder_ids = None
 
-def whisper_tensor_with_sr_transcription(
-    tensor: torch.Tensor,
-    sr: int,
-    processor: WhisperProcessor = WHISPER_PROCESSOR,
-    model: WhisperForConditionalGeneration = WHISPER_MODEL,
-) -> str:
-    tensor: np.ndarray = tensor.numpy().squeeze()
-    inputs = processor(
-        tensor,
-        sampling_rate=sr,
-        return_tensors=TORCH_TENSORS_KEYWOED
-    )
-    input_features = inputs.input_features
-    attention_mask = getattr(inputs, "attention_mask", None)
+@dataclass
+class Whisper:
+    processor:WhisperProcessor
+    model:WhisperForConditionalGeneration
+    @classmethod
+    def device_name_dir_path_init(
+        cls,
+        device_name:str = MOST_EFFECTIVE_AVAILABLE_DEVICE,
+        whisper_dir_path:Path = WHISPER_DIR_PATH,
+        ):
+        processor:WhisperProcessor = WhisperProcessor.from_pretrained(whisper_dir_path)
+        model:WhisperForConditionalGeneration = WhisperForConditionalGeneration.from_pretrained(whisper_dir_path).to(device_name)
+        model.config.forced_decoder_ids = None
+        return cls(
+            processor=processor,
+            model=model,
+        )
 
-    device:torch.device = next(model.parameters()).device
+    def _tensor_with_sr_transcription(
+        self,
+        tensor: torch.Tensor,
+        sr: int,
+        ) -> List[str]:
+        tensor:np.ndarray = tensor.numpy().squeeze()
+        inputs = self.processor(
+            tensor,
+            sampling_rate=sr,
+            return_tensors=TORCH_TENSORS_KEYWOED,
+            language="russian",  
+            task="transcribe",
+        )
+        input_features = inputs.input_features
+        attention_mask = getattr(inputs, "attention_mask", None)
 
-    input_features = input_features.to(device)
-    if attention_mask is not None:
-        attention_mask = attention_mask.to(device)
+        device:torch.device = next(self.model.parameters()).device
 
-    with torch.no_grad():
+        input_features = input_features.to(device)
         if attention_mask is not None:
-            predicted_ids = model.generate(input_features, attention_mask=attention_mask)
-        else:
-            predicted_ids = model.generate(input_features)
-        transcription: str = processor.batch_decode(predicted_ids, skip_special_tokens=True)
-    return transcription
+            attention_mask = attention_mask.to(device)
 
-def whisper_audio_file_2_transcription(
-    audio_path:Path,
-    processor:WhisperProcessor=WHISPER_PROCESSOR,
-    model:WhisperForConditionalGeneration=WHISPER_MODEL,
-    ):
-    tensor, sr = torchaudio.load(audio_path)
-    return whisper_tensor_with_sr_transcription(
-        tensor=tensor,
-        sr=sr,
-        processor=processor,
-        model=model,
-    )
+        with torch.no_grad():
+            if attention_mask is not None:
+                predicted_ids = self.model.generate(input_features, attention_mask=attention_mask)
+            else:
+                predicted_ids = self.model.generate(input_features)
+            transcription:List[str] = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)
+        
+        del input_features, attention_mask
+        torch.cuda.empty_cache()
+        return transcription
+
+    def audio_file_2_transcription(
+        self,
+        audio_path:Path,
+        ) -> List[str]:
+        tensor, sr = torchaudio.load(audio_path)
+        return self._tensor_with_sr_transcription(
+            tensor=tensor,
+            sr=sr,
+        )
+    

@@ -6,6 +6,8 @@ from typing import (
     List,
     Set,
     Optional,
+    Dict,
+    Union,
 )
 import pandas as pd
 import numpy as np
@@ -39,6 +41,7 @@ from configs.base import (
     RUSSIAN_VOWELS,
     TAB,
     DROP_DUPLICATES_KEEP_FIRST,
+    EMPTY,
 )
 from high_level_feature_extractor.volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
@@ -51,6 +54,12 @@ from utils.parallel_processing import (
 )
 from configs.datasets.dusha import (
     HASH_ID_COLUMN_NAME,
+)
+from models.asr.whisper import (
+    PROCESSED_DUSHA_CROWD_TRANSCRIPTIONS_WHISPER_LARGE_V3_FILE_PATH,
+)
+from models.asr.transcribe import (
+    TRANSCRIPTION_COLUMN_NAME,
 )
 
 def AudioWAVFilePathInitArgs_2_HashHLF(
@@ -75,14 +84,15 @@ def raw_crowd_2_HLF(
     df:pd.DataFrame,
     wavs_dir_path:Path,
     num_processes:int,
+    hash_2_transcription:Dict[str, str],
     chunks_quantity:int = 10,
     rows_quantity:Optional[int] = None,
     output_file_path:Path = PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
     reading_mode: str = RB_OPEN_FILE_MODE,
     hash_col_name:str = HASH_ID_COLUMN_NAME,
     drop_duplicates_keep:str = DROP_DUPLICATES_KEEP_FIRST,
-    HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
-    vowels:Set[str] = RUSSIAN_VOWELS,
+    # HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
+    # vowels:Set[str] = RUSSIAN_VOWELS,
     )->pd.Series:
     unique_hashes:np.ndarray = df.hash_id.unique()
     print(f'len(unique_hashes) = {len(unique_hashes)}')
@@ -95,13 +105,13 @@ def raw_crowd_2_HLF(
 
         # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
         file_path:Path = wavs_dir_path / Path(row.audio_path).name
-        if isinstance(row.speaker_text, str):
-            arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
-                path=file_path, 
-                transcription=row.speaker_text, 
-                reading_mode=reading_mode,
-            )
-            arguments_list.append(arguments)
+        transcription:Union[str, float] = hash_2_transcription[row.hash_id]
+        arguments:WAVFilePathInitArgs = WAVFilePathInitArgs(
+            path=file_path, 
+            transcription=transcription if isinstance(transcription, str) else EMPTY, 
+            reading_mode=reading_mode,
+        )
+        arguments_list.append(arguments)
     
     # for hash in unique_hashes:
     #     # hash_id and speaker_text do not depends on annotator answer, mb do drop duplicates by hash_id before
@@ -144,6 +154,12 @@ def extract(
     num_processes:int = 40,
     chunks_quantity:int = 40,
     ):
+    hash_2_transcription:Dict[str, Union[str, float]] = dict(
+        pd.read_csv(
+            PROCESSED_DUSHA_CROWD_TRANSCRIPTIONS_WHISPER_LARGE_V3_FILE_PATH, 
+            index_col=0,
+        )[TRANSCRIPTION_COLUMN_NAME]
+    )
     print('Start of the processing!')
     train_paths:RawCrowdHLFExtractingPaths = RawCrowdHLFExtractingPaths(
         crowd_file_path=DUSHA_CROWD_TRAIN_FILE_PATH,
@@ -163,6 +179,7 @@ def extract(
             wavs_dir_path=paths.wavs_dir_path,
             num_processes=num_processes,
             chunks_quantity=chunks_quantity,
+            hash_2_transcription=hash_2_transcription,
             # rows_quantity=100,
             output_file_path=paths.output_file_path,
         )

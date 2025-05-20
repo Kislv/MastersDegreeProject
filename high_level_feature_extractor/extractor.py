@@ -27,9 +27,6 @@ from transformers import (
 import librosa
 sys.path.append('..')
 
-from models.asr.whisper import (
-    whisper_audio_file_2_transcription,
-)
 from high_level_feature_extractor.volume.human_speech import (
     HIGH_FREQUENCY_SPEECH_THRESHOLD,
 )
@@ -41,9 +38,6 @@ from high_level_feature_extractor.volume.human_speech import (
 
 from high_level_feature_extractor.text.all import (
     TranscriptionHighLevelFeatures,
-)
-from models.asr.whisper import (
-    whisper_tensor_with_sr_transcription
 )
 
 from configs.base import (
@@ -144,21 +138,10 @@ class HighLevelSpeechFeatures:
         cls,
         audio:Audio,
         vowels:Set[str] = RUSSIAN_VOWELS,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str
-        ] = whisper_tensor_with_sr_transcription,
         ):
 
         duration:float = librosa.get_duration(y=audio.data, sr=audio.sr)
-        transcription:str = audio.joined_transcription(
-            transcriber=transcriber,
-        )
+        transcription:str = audio.joined_transcription()
         word_count:int = len(transcription.split())
         
         return PronounceSpeed(
@@ -182,24 +165,13 @@ class HighLevelSpeechFeatures:
         cls,
         audio:Audio,
         filter_speech:bool=True,
-        transcriber:Optional[
-            Callable[
-                [
-                torch.Tensor, 
-                int, 
-                WhisperProcessor, 
-                WhisperForConditionalGeneration
-                ], 
-                str,
-            ]
-        ] = whisper_tensor_with_sr_transcription,
         HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
         vowels:Set[str] = RUSSIAN_VOWELS,
         ): 
         if filter_speech:
             audio = cls.speech_filter(audio=audio)
-        if audio._transcription is None and transcriber is None:
-            raise Exception('audio._transcription is None and transcriber is None')
+        if audio._transcription is None:
+            raise Exception('audio._transcription is None')
 
         not_nan_quanity:int = np.count_nonzero(~np.isnan(np.array([audio.data])))
         are_all_zeros:bool = not np.any(audio.data)
@@ -217,12 +189,9 @@ class HighLevelSpeechFeatures:
             pronounce_speed=cls._pronunciation_speed(
                 audio=audio,
                 vowels=vowels, 
-                transcriber=transcriber,
             ),
             transcription_features = TranscriptionHighLevelFeatures.text_init(
-                text=audio.joined_transcription(
-                    transcriber=transcriber,
-                ),
+                text=audio.joined_transcription(),
             )
         )
 

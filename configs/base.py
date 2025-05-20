@@ -8,6 +8,7 @@ WB_OPEN_FILE_MODE:str = 'wb'
 
 SPACE:str = ' '
 DOT:str = '.'
+COLON:str = ':'
 SECONDS_QUANTITY_IN_MINUTE:int = 60
 BREAK_LINE:str = '\n'
 TAB:str = '\t'
@@ -15,7 +16,9 @@ DEFAULT_SEP:str = '_'
 
 # extensions
 CSV:str = 'csv'
+DOT_CSV:str = DOT + CSV
 JSONL:str = 'jsonl'
+DOT_JSONL:str = DOT + JSONL
 PT:str = 'pt'
 
 DROP_DUPLICATES_KEEP_FIRST:str = 'first'

@@ -10,6 +10,7 @@ from typing import (
     Optional,
     List,
     Set,
+    Union,
 )
 import torch
 import librosa
@@ -29,11 +30,6 @@ from configs.base import (
     EMPTY,
 )
 
-from models.asr.whisper import (
-    # whisper_audio_file_2_transcription,
-    whisper_tensor_with_sr_transcription,
-)
-
 from processing.text.normalization import (
     TOKENIZER,
     PUNCTUATION_SYMBOLS,
@@ -42,7 +38,7 @@ from processing.text.normalization import (
 @dataclass 
 class WAVFilePathInitArgs:
     path:Path
-    transcription:Optional[str] = None
+    transcription:str
     reading_mode:str = RB_OPEN_FILE_MODE
 
 @dataclass 
@@ -52,9 +48,9 @@ class Audio:
     sr:int
     n_frames:int
     data:np.ndarray
+    _transcription:Union[str, float]
     n_channels:int=1
     # TODO: Try to use "__"
-    _transcription:Optional[str] = None
 
     @classmethod
     def sample_width_2_dtype(
@@ -102,39 +98,12 @@ class Audio:
             )
             return audio
     # [''] understand what does it mean
-    def _transcribe(
-        self,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str
-        ] = whisper_tensor_with_sr_transcription,
-        )->str:
-        return transcriber(
-            tensor=torch.Tensor(self.data.copy()), 
-            sr=self.sr,
-        )
+
 
     def transcription(
         self,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str
-        ] = whisper_tensor_with_sr_transcription,
+
         )->List[str]:
-        if self._transcription is None:
-            self._transcription = self._transcribe(
-                transcriber=transcriber
-            )
         if isinstance(self._transcription, float):
             self._transcription = EMPTY
         return self._transcription 
@@ -142,18 +111,9 @@ class Audio:
     def joined_transcription(
         self,
         sep:str = BREAK_LINE,
-        transcriber:Callable[
-            [
-            torch.Tensor, 
-            int, 
-            WhisperProcessor, 
-            WhisperForConditionalGeneration
-            ], 
-            str
-        ] = whisper_tensor_with_sr_transcription,
         )->str:
         return sep.join(
-            self.transcription(transcriber=transcriber)
+            self._transcription
         )
 
     def new_data_copy(
@@ -168,36 +128,3 @@ class Audio:
         self,
         )->type:
         return type(self).sample_width_2_dtype(sample_width=self.sample_width)
-    
-
-    
-    # def mean_word_letters_quantity(
-    #     self,
-    #     ):
-    #     return
-    #     pass
-    
-
-    
-    # def _text_high_level_features(
-    #     self,
-    #     tokenizer:Callable = TOKENIZER,
-    #     punctuation_symbols:Set[str] = PUNCTUATION_SYMBOLS,
-    #     words_sep:str = SPACE,
-    #     transcriber:Callable[
-    #         [
-    #         torch.Tensor, 
-    #         int, 
-    #         WhisperProcessor, 
-    #         WhisperForConditionalGeneration
-    #         ], 
-    #         str
-    #     ] = whisper_tensor_with_sr_transcription,
-    #     )->TranscriptionHighLevelFeatures:
-    #     return TranscriptionHighLevelFeatures.text_init(
-    #         text=self.joined_transcription(transcriber=transcriber),
-    #         tokenizer=tokenizer,
-    #         punctuation_symbols=punctuation_symbols,
-    #         words_sep=words_sep,
-    #     )
-    

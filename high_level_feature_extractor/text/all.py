@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import sys
+import numpy as np
 from typing import (
     List,
     Callable,
@@ -63,15 +64,22 @@ class TranscriptionHighLevelFeatures:
         )
     
         words:List[str] = letters_and_seps_only.split(sep=words_sep)
+        words_quantity:int = len(words)
         return TranscriptionHighLevelFeatures(
-            mean_words_length = sum(
-                map(lambda word: len(word), words)
-            ) / len(words),
-            profanity_words_ratio = sum(
-                map(
-                    lambda word: text_2_is_contain_swear_words(word), normalized_text.split(words_sep)
-                )
-            ) / len(words),
+            
+            mean_words_length = (
+                sum(
+                    map(lambda word: len(word), words)
+                ) / words_quantity
+             ) if words_quantity > 0 else np.nan,
+
+            profanity_words_ratio = (
+                sum(
+                    map(
+                        lambda word: text_2_is_contain_swear_words(word), normalized_text.split(words_sep)
+                    )
+                ) / words_quantity
+            ) if words_quantity > 0 else np.nan,
             meaning=tf_idf_mean(
                 text=normalized_text,
             ),

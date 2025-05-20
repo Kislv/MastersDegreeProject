@@ -3,6 +3,7 @@ from dataclasses import (
     fields,
 )
 import pymorphy3
+import numpy as np
 
 # Tags without case declension:
 @dataclass
@@ -53,5 +54,5 @@ class POS_ratio:
                 quantity.NONE += 1 
         
         for field in fields(quantity):
-            setattr(quantity, field.name, getattr(quantity, field.name) / words_quantity)
+            setattr(quantity, field.name, (getattr(quantity, field.name) / words_quantity) if words_quantity > 0 else np.nan)
         return quantity
