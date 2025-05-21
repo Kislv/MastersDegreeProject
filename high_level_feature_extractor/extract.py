@@ -15,9 +15,10 @@ from pathlib import Path
 from dataclasses import (
     dataclass,
 )
+import os
 import sys
-sys.path.append('..')
 
+sys.path.append(os.getenv('MASTER_DEPLOMA_PROJECT_FILE_PATH'))
 from audio import (
     Audio,
     WAVFilePathInitArgs,
@@ -34,6 +35,9 @@ from configs.paths import (
     DUSHA_CROWD_TEST_WAVS_DIR_PATH,
     PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
     PROCESSED_DUSHA_CROWD_TEST_HLF_LAST_VERSION_FILE_PATH,
+    DUSHA_WAVS_DIR_NAME,
+    PROCESSED_DUSHA_CROWD_TRAIN_DIR_PATH,
+    PROCESSED_DUSHA_CROWD_TEST_DIR_PATH,
 )
 
 from configs.base import (
@@ -161,14 +165,15 @@ def extract(
         )[TRANSCRIPTION_COLUMN_NAME]
     )
     print('Start of the processing!')
+
     train_paths:RawCrowdHLFExtractingPaths = RawCrowdHLFExtractingPaths(
         crowd_file_path=DUSHA_CROWD_TRAIN_FILE_PATH,
-        wavs_dir_path=DUSHA_CROWD_TRAIN_WAVS_DIR_PATH,
+        wavs_dir_path=PROCESSED_DUSHA_CROWD_TRAIN_DIR_PATH / DUSHA_WAVS_DIR_NAME,
         output_file_path=PROCESSED_DUSHA_CROWD_TRAIN_HLF_LAST_VERSION_FILE_PATH,
     )
     test_paths:RawCrowdHLFExtractingPaths = RawCrowdHLFExtractingPaths(
         crowd_file_path=DUSHA_CROWD_TEST_FILE_PATH,
-        wavs_dir_path=DUSHA_CROWD_TEST_WAVS_DIR_PATH,
+        wavs_dir_path=PROCESSED_DUSHA_CROWD_TEST_DIR_PATH / DUSHA_WAVS_DIR_NAME,
         output_file_path=PROCESSED_DUSHA_CROWD_TEST_HLF_LAST_VERSION_FILE_PATH,
     )
 

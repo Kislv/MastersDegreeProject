@@ -73,7 +73,8 @@ class HighLevelSpeechFeatures:
         # sampling_rate, signal = wavfile.read(file_path)
         # Normalize to [-1, 1]
         
-        signal:np.ndarray = audio.data / np.max(np.abs(audio.data))
+        max_abs:np.float64 = np.max(np.abs(audio.data))
+        signal: np.ndarray = (audio.data / max_abs) if max_abs != 0 else (audio.data * np.nan)
 
         # Apply Hann window
         window:np.ndarray = np.hanning(len(signal))
@@ -99,30 +100,30 @@ class HighLevelSpeechFeatures:
         ratio:np.float64 = high_freq_energy / total_energy
         return ratio 
 
-    @classmethod
-    def speech_filter(
-        cls,
-        audio:Audio, 
-        low_freq=HUMAN_SPEECH_FREQ_BOTTOM, 
-        high_freq=HUMAN_SPEECH_FREQ_TOP,
-        )->Audio:
+    # @classmethod
+    # def speech_filter(
+    #     cls,
+    #     audio:Audio, 
+    #     low_freq=HUMAN_SPEECH_FREQ_BOTTOM, 
+    #     high_freq=HUMAN_SPEECH_FREQ_TOP,
+    #     )->Audio:
 
-        fft_result:np.ndarray = rfft(audio.data)
-        fft_result_filtered:np.ndarray = fft_result.copy()
-        if audio.sr == 0:
-            return np.nan
-        freqs:np.ndarray = np.fft.fftfreq(audio.n_frames, d=1.0/audio.sr)
+    #     fft_result:np.ndarray = rfft(audio.data)
+    #     fft_result_filtered:np.ndarray = fft_result.copy()
+    #     if audio.sr == 0:
+    #         return np.nan
+    #     freqs:np.ndarray = np.fft.fftfreq(audio.n_frames, d=1.0/audio.sr)
 
-        positive_freqs:np.ndarray = freqs[:len(freqs) // 2 + 1]
+    #     positive_freqs:np.ndarray = freqs[:len(freqs) // 2 + 1]
 
-        for i, freq in enumerate(positive_freqs):
-            if abs(freq) > high_freq or abs(freq) < low_freq:
-                fft_result_filtered[i] = 0
+    #     for i, freq in enumerate(positive_freqs):
+    #         if abs(freq) > high_freq or abs(freq) < low_freq:
+    #             fft_result_filtered[i] = 0
 
-        filtered_signal:np.ndarray = irfft(fft_result_filtered)
-        sample_dtype:type = audio.sample_dtype()
-        filtered_signal:np.ndarray = filtered_signal.astype(sample_dtype) 
-        return audio.new_data_copy(data=filtered_signal)
+    #     filtered_signal:np.ndarray = irfft(fft_result_filtered)
+    #     sample_dtype:type = audio.sample_dtype()
+    #     filtered_signal:np.ndarray = filtered_signal.astype(sample_dtype) 
+    #     return audio.new_data_copy(data=filtered_signal)
     
     @classmethod
     def _volume(
@@ -164,12 +165,12 @@ class HighLevelSpeechFeatures:
     def audio_init(
         cls,
         audio:Audio,
-        filter_speech:bool=True,
+        # filter_speech:bool=True,
         HF_threshold: int = HIGH_FREQUENCY_SPEECH_THRESHOLD,
         vowels:Set[str] = RUSSIAN_VOWELS,
         ): 
-        if filter_speech:
-            audio = cls.speech_filter(audio=audio)
+        # if filter_speech:
+        #     audio = cls.speech_filter(audio=audio)
         if audio._transcription is None:
             raise Exception('audio._transcription is None')
 
