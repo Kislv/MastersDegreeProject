@@ -29,7 +29,8 @@ def plot_features_corr_matrix(
         annot=True,
         # cmap='coolwarm',
         cmap='Greys' if is_greys else 'coolwarm',  # White-black color map
-        vmin=-1, vmax=1,
+        vmin=-1, 
+        vmax=1,
         center=0,
         square=True,
         fmt='.2f',
@@ -46,6 +47,7 @@ def plot_feature_class_corr_matrix(
     target_col_name: str, 
     features_renamer:Optional[Callable[[str], str]]=None,
     is_greys:bool = False,
+    figsize:Tuple[int, int] = (4.5, 10),
     ):
     classes:np.ndarray = X_y[target_col_name].unique()
     features:List[str] = [col for col in X_y.columns if col != target_col_name]
@@ -58,17 +60,22 @@ def plot_feature_class_corr_matrix(
             corr_matrix.loc[feature, cls] = corr
 
     corr_matrix = corr_matrix.astype(float)
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=figsize)
     corr_matrix.rename(index=features_renamer, inplace=True)
-    sns.heatmap(
+    ax = sns.heatmap(
         corr_matrix, 
         annot=True, 
         fmt='.2f', 
         cmap='Greys' if is_greys else 'coolwarm',  
         vmin=-1, 
         vmax=1,
+        annot_kws={"size": 13},  # annotation font size
     )
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14)  # Set colorbar font size
     # plt.title('Correlation between features and each class')
-    plt.xlabel('Класс')
-    plt.ylabel('Признак')
+    plt.xlabel('Класс', fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.ylabel('Признак', fontsize=14)
+    plt.yticks(fontsize=14)
     plt.show()

@@ -4,6 +4,7 @@ from typing import (
     Optional,
     Iterable,
     Union,
+    Tuple,
 )
 import pandas as pd
 import numpy as np
@@ -18,11 +19,12 @@ def shap_tree_feature_importance(
     y_test:pd.Series,
     column_names:List[str],
     class_names:List[str],
+    figsize:Tuple[int, int] = (12, 8),
     ):
     explainer:shap.explainers._tree.TreeExplainer = shap.TreeExplainer(model)
     shap_values:np.ndarray = explainer.shap_values(X_test, y=y_test)
 
-    plt.figure(figsize=(12, 8))
+    # plt.figure(figsize=(12, 8))
 
     shap.summary_plot(
         shap_values, 
@@ -30,12 +32,12 @@ def shap_tree_feature_importance(
         feature_names=column_names,
         plot_type="bar",
         max_display=20,
-        plot_size=(12, 8),
+        plot_size=figsize,
         show=False,
         class_names=class_names,
     )
 
-    plt.gcf().set_size_inches(12, 8)  # Set figure size
+    plt.gcf().set_size_inches(*figsize)  # Set figure size
     plt.xlabel(
         'mean(|SHAP value|) - вклад признака', 
         fontsize=12,
@@ -102,6 +104,7 @@ def shap_row_waterfall_plot(
     X:pd.DataFrame,
     y:pd.Series,
     cols_names:Optional[Iterable[str]] = None,
+    # figsize:Tuple[int, int] = (10, 6),
     # top_important_k:int = 10 # TODO: extract k most important, visualize them, other features sum up and name f'{m} other features'
     ):
 
@@ -114,11 +117,10 @@ def shap_row_waterfall_plot(
     shap_values_row = shap_values[0]
     class_name = tree_model.classes_[class_idx]
 
-    plt.figure(figsize=(10, 6))
 
     print(f'Значения Шепли для конкретной записи. Предсказанный класс - {class_name}, истинный класс - {true_label}')
     plt.tight_layout()
-
+    # plt.figure(figsize=figsize)
     shap.plots.waterfall(
         shap.Explanation(
             # values=shap_values_row[:top_important_k,0], # not sorted by importance
@@ -127,5 +129,9 @@ def shap_row_waterfall_plot(
             data=X.loc[row_index],
             feature_names=cols_names,
         ),
+        show=True,
+        # ax=ax,
         # color=plt.cm.Greys,  # <-- here is the change to greyscale
     )
+
+

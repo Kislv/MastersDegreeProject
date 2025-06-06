@@ -20,7 +20,7 @@ from models.quality_estimating.feature_importance import (
     normalized_feature_importance,
 )
 
-NORMED_FEATURE_IMPORTANCE_DEFAULT_FIGSIZE:Tuple[int, int] = (8, 6)
+NORMED_FEATURE_IMPORTANCE_DEFAULT_FIGSIZE:Tuple[int, int] = (5, 7)
 
 def normalized_feature_importance_plot(
     feature_names:Iterable[str],

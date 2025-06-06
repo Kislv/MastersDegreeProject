@@ -72,7 +72,7 @@ def plot_partial_dependence_catboost(
     model:CatBoost,
     X:pd.DataFrame,
     top_features: int = 3,
-    suptitle:str = 'Частичная зависимость',
+    # suptitle:str = 'Частичная зависимость',
     grid_values_str:str=PARTIAL_DEPENDENCE_GRID_VALUES,
     kind:str=PARTIAL_DEPENDENCE_KIND_AVERAGE,
     ):
@@ -81,7 +81,7 @@ def plot_partial_dependence_catboost(
         X=X,
         model_class_names=model.classes_,
         feature_names=cb_model_2_feature_importance_series(model=model).head(top_features).index.to_list(),
-        suptitle=suptitle,
+        # suptitle=suptitle,
         grid_values_str=grid_values_str,
         kind=kind,
     )
