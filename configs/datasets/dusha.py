@@ -26,6 +26,7 @@ TEXT_2_EMOTION_TARGET_FIELD_NAME:str = SPEAKER_EMOTION_FIELD_NAME
 DURATION_COLUMN_NAME:str = 'duration'
 EMOTION_COLUMN_NAME:str = 'annotator_emo'
 HASH_ID_COLUMN_NAME:str = 'hash_id'
+SAMPLE_RATE:int = 16_000
 
 # TODO: ensure it is correct
 class GoldenEmo(Enum):
