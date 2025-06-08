@@ -1,6 +1,6 @@
 # Градиентный бустинг
 
-* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/Ryg5FBzU678f2g).
+* Скачать модель можно по [ссылке](https://disk.360.yandex.ru/d/oqE4Vr0jXG52Og).
 
 * Код чтение модели:
 
@@ -15,7 +15,7 @@ with open('model.pkl', 'rb') as f:
 
 # Дерево решений
 
-* Скачать модель можно по [ссылке](https://disk.yandex.ru/d/gKmRMyEMaKKFKQ).
+* Скачать модель можно по [ссылке](https://disk.360.yandex.ru/d/SJ1hWRBmH_gW1A).
 
 * Код чтение модели:
 
