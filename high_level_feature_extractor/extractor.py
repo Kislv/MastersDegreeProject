@@ -257,6 +257,10 @@ HLF_ENG_NAME_2_RU_NAME:Dict[str,str] = {
     'transcription_features_POS_ratio_NUMR': 'доля числительных',
     'transcription_features_POS_ratio_PRTF': 'доля полных причастий',
     'transcription_features_POS_ratio_NONE': 'доля слов с неопределенной частью речи',
+    'age': 'возраст',
+    'female': 'пол женский',
+    'male': 'пол мужской',
+    'child': 'является ребенком',
 }
 
 HLF_ENG_2_RU_RENAMER:Callable[[str], str] = lambda x: HLF_ENG_NAME_2_RU_NAME[x]

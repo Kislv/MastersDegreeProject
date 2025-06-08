@@ -104,6 +104,7 @@ def shap_row_waterfall_plot(
     X:pd.DataFrame,
     y:pd.Series,
     cols_names:Optional[Iterable[str]] = None,
+    title:Optional[str] = None,
     # figsize:Tuple[int, int] = (10, 6),
     # top_important_k:int = 10 # TODO: extract k most important, visualize them, other features sum up and name f'{m} other features'
     ):
@@ -120,6 +121,7 @@ def shap_row_waterfall_plot(
 
     print(f'Значения Шепли для конкретной записи. Предсказанный класс - {class_name}, истинный класс - {true_label}')
     plt.tight_layout()
+    plt.title(title)
     # plt.figure(figsize=figsize)
     shap.plots.waterfall(
         shap.Explanation(

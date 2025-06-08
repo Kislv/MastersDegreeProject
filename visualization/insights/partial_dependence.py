@@ -1,6 +1,8 @@
 from typing import (
     Any,
     List,
+    Optional,
+    Dict,
 )
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,6 +35,7 @@ def plot_partial_dependence(
     suptitle:str = 'Частичная зависимость',
     grid_values_str:str=PARTIAL_DEPENDENCE_GRID_VALUES,
     kind:str=PARTIAL_DEPENDENCE_KIND_AVERAGE,
+    features_renamer:Optional[Dict[str, str]]=HLF_ENG_NAME_2_RU_NAME,
     ):
     features_quantity: int = len(feature_names)
     plt.figure(figsize=(6, 9))  # Adjusted figure size since we'll have fewer subplots
@@ -61,7 +64,7 @@ def plot_partial_dependence(
             )
         
         ax.grid(True, alpha=0.3)
-        ax.set_title(f'{HLF_ENG_NAME_2_RU_NAME[feature]}', fontsize=16)
+        ax.set_title(f'{features_renamer[feature]}', fontsize=16)
         ax.legend()  # Add legend to show which line corresponds to which class
 
     plt.tight_layout()

@@ -18,6 +18,7 @@ def plot_features_corr_matrix(
     X:pd.DataFrame,
     figsize:Tuple[int, int] = (18, 15),
     is_greys:bool = False,
+    title:Optional[str] = None,
     ):
     correlation_matrix:pd.DataFrame = X.corr()
     # correlation_matrix: pd.DataFrame = X.corr()[1:,:-1].copy()
@@ -35,11 +36,14 @@ def plot_features_corr_matrix(
         square=True,
         fmt='.2f',
         linewidths=.5,  # Optional: adds lines between squares for clarity
-        cbar_kws={"shrink": .8}  # Optional: shrinks colorbar
+        cbar_kws={"shrink": .8},  # Optional: shrinks colorbar
+        annot_kws={"size": 11},  # annotation font size
+
     )
     plt.xticks(rotation=45, ha='right')
     plt.yticks(rotation=0)
     plt.tight_layout()
+    plt.title(title)
     plt.show()
 
 def plot_feature_class_corr_matrix(
@@ -50,19 +54,22 @@ def plot_feature_class_corr_matrix(
     figsize:Tuple[int, int] = (4.5, 10),
     ):
     classes:np.ndarray = X_y[target_col_name].unique()
+    classes.sort()
     features:List[str] = [col for col in X_y.columns if col != target_col_name]
     corr_matrix:pd.DataFrame = pd.DataFrame(index=features, columns=classes)
     
     for cls in classes:
-        binary_target:pd.Series = (X_y[target_col_name] == cls).astype(int)
+        binary_target:pd.Series = (X_y[target_col_name] == cls).astype(int) # use groupby
         for feature in features:
             corr:np.float64 = X_y[feature].corr(binary_target)
             corr_matrix.loc[feature, cls] = corr
 
     corr_matrix = corr_matrix.astype(float)
     plt.figure(figsize=figsize)
-    corr_matrix.rename(index=features_renamer, inplace=True)
+    if features_renamer is not None:
+        corr_matrix.rename(index=features_renamer, inplace=True)
     ax = sns.heatmap(
+        # corr_matrix.dropna(axis=0), 
         corr_matrix, 
         annot=True, 
         fmt='.2f', 

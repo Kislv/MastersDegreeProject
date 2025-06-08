@@ -75,7 +75,7 @@ def plot_confusion_matrices(
     sep:str = DOT + SPACE,
     ):
     if class_names is None:
-        class_names = list(set(y_true).union(set(y_pred)))
+        class_names = sorted(list(set(y_true).union(set(y_pred))))
 
     # TODO: to config
     normalize_type_2_title:Dict[str, str] = {
